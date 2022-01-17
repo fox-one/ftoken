@@ -21,6 +21,7 @@ type (
 		ID          uint64          `gorm:"PRIMARY_KEY;" json:"id"`
 		CreatedAt   time.Time       `json:"created_at"`
 		UpdatedAt   time.Time       `json:"updated_at"`
+		Version     int             `json:"version"`
 		ValidBefore time.Time       `json:"valid_before"`
 		TraceID     string          `sql:"size:36;" json:"trace_id"`
 		State       OrderState      `json:"state"`
@@ -31,12 +32,12 @@ type (
 		Tokens      Tokens          `gorm:"type:longtext;" json:"tokens"`
 		Receiver    string          `gorm:"size:255;" json:"receiver"`
 		Transaction string          `gorm:"size:255;" json:"transaction"`
-		AssetID     string          `gorm:"size:36;" json:"asset_id"`
 	}
 
 	OrderStore interface {
 		Create(ctx context.Context, order *Order) error
 		Update(ctx context.Context, order *Order) error
+		Find(ctx context.Context, traceID string) (*Order, error)
 		List(ctx context.Context, from uint64, limit int) ([]*Order, error)
 	}
 )

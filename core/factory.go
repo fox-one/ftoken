@@ -3,7 +3,9 @@ package core
 import (
 	"bytes"
 	"context"
+	"database/sql/driver"
 	"encoding/binary"
+	"encoding/json"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -20,11 +22,11 @@ type (
 	TransactionState int
 
 	Token struct {
-		Name        string `gorm:"size:255;" json:"name"`
-		Symbol      string `gorm:"size:255;" json:"symbol"`
-		TotalSupply uint64 `json:"total_supply"`
-		AssetKey    string `gorm:"size:255;" json:"asset_key"`
-		AssetID     string `gorm:"size:36;" json:"asset_id"`
+		Name        string `gorm:"size:255;" json:"name,omitempty"`
+		Symbol      string `gorm:"size:255;" json:"symbol,omitempty"`
+		TotalSupply uint64 `json:"total_supply,omitempty"`
+		AssetKey    string `gorm:"size:255;" json:"asset_key,omitempty"`
+		AssetID     string `gorm:"size:36;" json:"asset_id,omitempty"`
 	}
 
 	Tokens []*Token
@@ -72,4 +74,27 @@ func uint64ToByte(d uint64) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, d)
 	return b
+}
+
+// Scan implements the sql.Scanner interface for database deserialization.
+func (s *Tokens) Scan(value interface{}) error {
+	var d []byte
+	switch v := value.(type) {
+	case string:
+		d = []byte(v)
+	case []byte:
+		d = v
+	}
+	var tokens Tokens
+	if err := json.Unmarshal(d, &tokens); err != nil {
+		return err
+	}
+	*s = tokens
+	return nil
+}
+
+// Value implements the driver.Valuer interface for database serialization.
+func (s *Tokens) Value() (driver.Value, error) {
+	data, err := json.Marshal(s)
+	return data, err
 }
