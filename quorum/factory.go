@@ -164,7 +164,7 @@ func (f *Factory) ReadTransaction(ctx context.Context, hash string) (*core.Trans
 	tx := core.Transaction{
 		Hash:  txRaw.Hash().String(),
 		Raw:   hex.EncodeToString(rawData),
-		Gas:   decimal.NewFromBigInt(txRaw.Cost(), 0),
+		Gas:   decimal.NewFromBigInt(txRaw.Cost(), 0).Shift(-10).Ceil().Shift(-8),
 		State: core.TransactionStatePending,
 	}
 
@@ -174,6 +174,7 @@ func (f *Factory) ReadTransaction(ctx context.Context, hash string) (*core.Trans
 			return nil, err
 		}
 
+		tx.Gas = decimal.NewFromInt(int64(receipt.GasUsed * txRaw.GasPrice().Uint64())).Shift(-10).Ceil().Shift(-8)
 		if receipt.Status == 0 {
 			tx.State = core.TransactionStateFailed
 			return &tx, nil
