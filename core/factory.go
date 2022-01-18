@@ -32,16 +32,16 @@ type (
 	Tokens []*Token
 
 	Transaction struct {
-		ID        uint64           `gorm:"PRIMARY_KEY;" json:"id"`
+		ID        uint64           `sql:"PRIMARY_KEY;" json:"id"`
 		CreatedAt time.Time        `json:"created_at"`
 		UpdatedAt time.Time        `json:"updated_at"`
 		Version   int              `json:"version"`
-		TraceID   string           `gorm:"size:36;" json:"trace_id,omitempty"`
+		TraceID   string           `sql:"size:36;" json:"trace_id,omitempty"`
 		Hash      string           `json:"hash,omitempty"`
-		Raw       string           `gorm:"type:longtext;" json:"raw,omitempty"`
+		Raw       string           `sql:"type:longtext;" json:"raw,omitempty"`
 		State     TransactionState `json:"state,omitempty"`
-		Tokens    Tokens           `json:"tokens,omitempty"`
-		Gas       decimal.Decimal  `json:"gas,omitempty"`
+		Tokens    Tokens           `sql:"type:longtext;" json:"tokens,omitempty"`
+		Gas       decimal.Decimal  `sql:"type:decimal(64,8)" json:"gas,omitempty"`
 	}
 
 	Factory interface {
