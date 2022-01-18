@@ -111,6 +111,7 @@ func (w *Worker) handlePaidOrder(ctx context.Context, order *core.Order) error {
 			order.State = core.OrderStateFailed
 			tx.Gas = tx1.Gas
 		}
+		tx.State = tx1.State
 		if err := w.transactions.Update(ctx, tx); err != nil {
 			log.WithError(err).Errorln("transactions.Update failed")
 			return err
