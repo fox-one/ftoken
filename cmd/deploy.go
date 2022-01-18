@@ -38,7 +38,7 @@ var deployCmd = &cobra.Command{
 			return
 		}
 
-		factory := provideEthFactory()
+		factory := provideQuorumFactory()
 		tx, err := factory.CreateTransaction(ctx, tokens, receiver)
 		if err != nil {
 			cmd.PrintErr("CreateTransaction failed:", err)

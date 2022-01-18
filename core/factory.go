@@ -35,6 +35,7 @@ type (
 		ID        uint64           `gorm:"PRIMARY_KEY;" json:"id"`
 		CreatedAt time.Time        `json:"created_at"`
 		UpdatedAt time.Time        `json:"updated_at"`
+		Version   int              `json:"version"`
 		TraceID   string           `gorm:"size:36;" json:"trace_id,omitempty"`
 		Hash      string           `json:"hash,omitempty"`
 		Raw       string           `gorm:"type:longtext;" json:"raw,omitempty"`
@@ -54,7 +55,7 @@ type (
 	TransactionStore interface {
 		Create(ctx context.Context, tx *Transaction) error
 		Update(ctx context.Context, tx *Transaction) error
-		Find(ctx context.Context, hash string) (*Transaction, error)
+		Find(ctx context.Context, traceID string) (*Transaction, error)
 	}
 )
 
@@ -68,6 +69,30 @@ func EncodeTokens(tokens Tokens) ([]byte, error) {
 		enc.Write(uint64ToByte(token.TotalSupply))
 	}
 	return enc.Bytes(), nil
+}
+
+func DecodeTokens(data []byte) Tokens {
+	var tokens Tokens
+
+	for len(data) > 10 {
+		var token Token
+		if size := int(data[0]); len(data) > 10+size {
+			token.Name = string(data[1 : 1+size])
+			data = data[1+size:]
+		}
+
+		if size := int(data[0]); len(data) > 9+size {
+			token.Symbol = string(data[1 : 1+size])
+			data = data[1+size:]
+		}
+
+		token.TotalSupply = binary.BigEndian.Uint64(data)
+		data = data[8:]
+		if token.TotalSupply > 0 {
+			tokens = append(tokens, &token)
+		}
+	}
+	return tokens
 }
 
 func uint64ToByte(d uint64) []byte {

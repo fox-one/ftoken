@@ -32,7 +32,7 @@ var gettransactionCmd = &cobra.Command{
 			return
 		}
 
-		factory := provideEthFactory()
+		factory := provideQuorumFactory()
 		tx, err := factory.ReadTransaction(context.Background(), hash)
 		if err != nil {
 			cmd.PrintErr("ReadTransaction failed:", err)
