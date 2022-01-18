@@ -69,7 +69,7 @@ func (s *orderStore) List(ctx context.Context, state core.OrderState, limit int)
 	query := s.db.View().Limit(limit)
 
 	switch state {
-	case core.OrderStatePending, core.OrderStateFailed, core.OrderStateDone:
+	case core.OrderStatePending, core.OrderStatePaid, core.OrderStateFailed, core.OrderStateDone:
 		query = query.Where("state = ?", state)
 	}
 
