@@ -1,0 +1,80 @@
+/*
+Copyright © 2020 NAME HERE <EMAIL ADDRESS>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+package cmd
+
+import (
+	"github.com/fox-one/ftoken/worker"
+	"github.com/fox-one/ftoken/worker/cashier"
+	"github.com/fox-one/ftoken/worker/payee"
+	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
+)
+
+// workerCmd represents the worker command
+var workerCmd = &cobra.Command{
+	Use:   "worker",
+	Short: "run dirtoracle worker",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+		cfg.DB.ReadHost = ""
+		database, err := provideDatabase()
+		if err != nil {
+			cmd.PrintErrf("provideDatabase failed: %v", err)
+			return
+		}
+
+		defer database.Close()
+		client := provideMixinClient()
+
+		wallets := provideWalletStore(database)
+		walletz := provideWalletService(client)
+		orders := provideOrderStore(database)
+		transactions := provideTransactionStore(database)
+		properties := providePropertyStore(database)
+		factories := provideAllFactories()
+
+		workers := []worker.Worker{
+			cashier.New(wallets, walletz),
+			payee.New(
+				payee.Config{ClientID: cfg.Dapp.ClientID},
+				properties,
+				orders,
+				transactions,
+				wallets,
+				walletz,
+				factories,
+			),
+		}
+
+		cmd.Printf("ftoken worker with version %q launched!\n", rootCmd.Version)
+
+		g, ctx := errgroup.WithContext(ctx)
+		for idx := range workers {
+			w := workers[idx]
+			g.Go(func() error {
+				return w.Run(ctx)
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			cmd.PrintErrln("run worker", err)
+		}
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(workerCmd)
+}
