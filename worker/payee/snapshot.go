@@ -3,12 +3,12 @@ package payee
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/fox-one/ftoken/core"
+	"github.com/fox-one/ftoken/pkg/mtg"
 	"github.com/fox-one/pkg/logger"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/lib/pq"
@@ -102,17 +102,12 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 		data = d
 	}
 
-	var input struct {
-		Tokens   []byte `json:"t"`
-		Receiver string `json:"r"`
-	}
+	var (
+		tokens   core.Tokens
+		receiver string
+	)
 
-	if err := json.Unmarshal(data, &input); err != nil || len(input.Tokens) == 0 || input.Receiver == "" {
-		return w.refundSnapshot(ctx, snapshot.TraceID, snapshot.OpponentID, snapshot.AssetID, snapshot.Amount)
-	}
-
-	tokens := core.DecodeTokens(input.Tokens)
-	if len(tokens) == 0 {
+	if _, err := mtg.Scan(data, &tokens, &receiver); err != nil || len(tokens) == 0 || receiver == "" {
 		return w.refundSnapshot(ctx, snapshot.TraceID, snapshot.OpponentID, snapshot.AssetID, snapshot.Amount)
 	}
 
@@ -128,13 +123,14 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 			TraceID:   snapshot.TraceID,
 			State:     core.OrderStatePaid,
 			UserID:    snapshot.OpponentID,
+			Receiver:  receiver,
 			FeeAsset:  snapshot.AssetID,
 			FeeAmount: snapshot.Amount,
 			Platform:  factory.Platform(),
 			Tokens:    tokens,
 		}
 
-		tx, err := factory.CreateTransaction(ctx, tokens, input.Receiver)
+		tx, err := factory.CreateTransaction(ctx, tokens, receiver)
 		if err != nil {
 			log.WithError(err).Errorln("factory.CreateTransaction")
 			return err

@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -71,34 +72,89 @@ func EncodeTokens(tokens Tokens) ([]byte, error) {
 	return enc.Bytes(), nil
 }
 
+func EncodeToken(token Token) ([]byte, error) {
+	enc := bytes.NewBuffer(nil)
+	enc.WriteByte(byte(len(token.Name)))
+	enc.Write([]byte(token.Name))
+	enc.WriteByte(byte(len(token.Symbol)))
+	enc.Write([]byte(token.Symbol))
+	enc.Write(uint64ToByte(token.TotalSupply))
+	return enc.Bytes(), nil
+}
+
 func DecodeTokens(data []byte) Tokens {
-	var tokens Tokens
+	var (
+		token  *Token
+		tokens Tokens
+	)
 
 	for len(data) > 10 {
-		var token Token
-		if size := int(data[0]); len(data) > 10+size {
-			token.Name = string(data[1 : 1+size])
-			data = data[1+size:]
-		}
-
-		if size := int(data[0]); len(data) > 9+size {
-			token.Symbol = string(data[1 : 1+size])
-			data = data[1+size:]
-		}
-
-		token.TotalSupply = binary.BigEndian.Uint64(data)
-		data = data[8:]
-		if token.TotalSupply > 0 {
-			tokens = append(tokens, &token)
+		if token, data = DecodeToken(data); token != nil {
+			tokens = append(tokens, token)
 		}
 	}
 	return tokens
+}
+
+func DecodeToken(data []byte) (*Token, []byte) {
+	if len(data) <= 10 {
+		return nil, nil
+	}
+
+	var token Token
+	offset := 0
+	if size := int(data[offset]); len(data) > 10+size {
+		offset++
+		token.Name = string(data[offset : offset+size])
+		offset += size
+	} else {
+		return nil, nil
+	}
+
+	if size := int(data[offset]); len(data) >= offset+size+9 {
+		offset++
+		token.Symbol = string(data[offset : offset+size])
+		offset += size
+	} else {
+		return nil, nil
+	}
+
+	token.TotalSupply = binary.BigEndian.Uint64(data[offset : offset+8])
+	offset += 8
+	data = data[offset:]
+	if token.TotalSupply > 0 {
+		return &token, data
+	}
+	return nil, data
 }
 
 func uint64ToByte(d uint64) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, d)
 	return b
+}
+
+func (t Token) MarshalBinary() ([]byte, error) {
+	return EncodeToken(t)
+}
+
+func (t *Token) UnmarshalBinary(data []byte) error {
+	token, _ := DecodeToken(data)
+	if token == nil {
+		return errors.New("unmarshal Token failed")
+	}
+	*t = *token
+	return nil
+}
+
+func (t Tokens) MarshalBinary() ([]byte, error) {
+	return EncodeTokens(t)
+}
+
+func (t *Tokens) UnmarshalBinary(data []byte) error {
+	tokens := DecodeTokens(data)
+	*t = tokens
+	return nil
 }
 
 // Scan implements the sql.Scanner interface for database deserialization.
@@ -119,7 +175,7 @@ func (s *Tokens) Scan(value interface{}) error {
 }
 
 // Value implements the driver.Valuer interface for database serialization.
-func (s *Tokens) Value() (driver.Value, error) {
+func (s Tokens) Value() (driver.Value, error) {
 	data, err := json.Marshal(s)
 	return data, err
 }
