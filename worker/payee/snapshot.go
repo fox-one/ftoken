@@ -104,10 +104,10 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 
 	var (
 		tokens   core.Tokens
-		receiver string
+		receiver core.Address
 	)
 
-	if _, err := mtg.Scan(data, &tokens, &receiver); err != nil || len(tokens) == 0 || receiver == "" {
+	if _, err := mtg.Scan(data, &tokens, &receiver); err != nil || len(tokens) == 0 || receiver.Destination == "" {
 		return w.refundSnapshot(ctx, snapshot.TraceID, snapshot.OpponentID, snapshot.AssetID, snapshot.Amount)
 	}
 
@@ -120,17 +120,18 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 	if order.ID == 0 {
 		order = &core.Order{
 			CreatedAt: snapshot.CreatedAt,
+			Version:   1,
 			TraceID:   snapshot.TraceID,
 			State:     core.OrderStatePaid,
 			UserID:    snapshot.OpponentID,
-			Receiver:  receiver,
+			Receiver:  &receiver,
 			FeeAsset:  snapshot.AssetID,
 			FeeAmount: snapshot.Amount,
 			Platform:  factory.Platform(),
 			Tokens:    tokens,
 		}
 
-		tx, err := factory.CreateTransaction(ctx, tokens, receiver)
+		tx, err := factory.CreateTransaction(ctx, tokens, &receiver)
 		if err != nil {
 			log.WithError(err).Errorln("factory.CreateTransaction")
 			return err

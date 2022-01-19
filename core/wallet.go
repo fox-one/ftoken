@@ -50,11 +50,12 @@ type (
 		ListTransfers(ctx context.Context, limit int) ([]*Transfer, error)
 		CreateTransfers(ctx context.Context, transfers []*Transfer) error
 		ExpireTransfers(ctx context.Context, transfers []*Transfer) error
-		CountTransfers(ctx context.Context) (int,error)
+		CountTransfers(ctx context.Context) (int, error)
 	}
 
 	WalletService interface {
 		ListSnapshots(ctx context.Context, offset time.Time, limit int) ([]*Snapshot, error)
 		Transfer(ctx context.Context, transfer *Transfer) error
+		ReqTransfer(ctx context.Context, transfer *Transfer) (string, error)
 	}
 )

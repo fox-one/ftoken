@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/ftoken/quorum"
 	walletz "github.com/fox-one/ftoken/service/wallet"
@@ -12,6 +14,28 @@ import (
 	"github.com/fox-one/pkg/store/db"
 	propertystore "github.com/fox-one/pkg/store/property"
 )
+
+func provideSystem(ctx context.Context, client *mixin.Client, factories []core.Factory) (core.System, error) {
+	system := core.System{
+		ClientID:     cfg.Dapp.ClientID,
+		ClientSecret: cfg.Dapp.ClientSecret,
+		Version:      rootCmd.Version,
+		Addresses:    make(map[string]*core.Address, len(factories)),
+	}
+
+	for _, factory := range factories {
+		asset, err := client.ReadAsset(ctx, factory.GasAsset())
+		if err != nil {
+			return system, err
+		}
+		system.Addresses[factory.GasAsset()] = &core.Address{
+			Destination: asset.Destination,
+			Tag:         asset.Tag,
+		}
+	}
+
+	return system, nil
+}
 
 func provideMixinClient() *mixin.Client {
 	c, err := mixin.NewFromKeystore(&cfg.Dapp.Keystore)

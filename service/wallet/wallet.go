@@ -60,6 +60,32 @@ func (m *mixinBot) Transfer(ctx context.Context, req *core.Transfer) error {
 	return err
 }
 
+func (s *mixinBot) ReqTransfer(ctx context.Context, transfer *core.Transfer) (string, error) {
+	input := mixin.TransferInput{
+		AssetID: transfer.AssetID,
+		Amount:  transfer.Amount.Truncate(8),
+		TraceID: transfer.TraceID,
+		Memo:    transfer.Memo,
+	}
+
+	if len(transfer.Opponents) == 1 {
+		input.OpponentID = transfer.Opponents[0]
+	} else {
+		input.OpponentMultisig.Receivers = transfer.Opponents
+		input.OpponentMultisig.Threshold = transfer.Threshold
+		if transfer.Threshold == 0 {
+			transfer.Threshold = 1
+		}
+	}
+
+	payment, err := s.client.VerifyPayment(ctx, input)
+	if err != nil {
+		return "", err
+	}
+
+	return payment.CodeID, nil
+}
+
 func convertSnapshots(items []*mixin.Snapshot) []*core.Snapshot {
 	var snapshots = make([]*core.Snapshot, len(items))
 	for i, s := range items {

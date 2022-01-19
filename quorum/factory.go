@@ -73,7 +73,7 @@ func (*Factory) GasAsset() string {
 	return EthAsset
 }
 
-func (f *Factory) CreateTransaction(ctx context.Context, tokens []*core.Token, receiver string) (*core.Transaction, error) {
+func (f *Factory) CreateTransaction(ctx context.Context, tokens []*core.Token, receiver *core.Address) (*core.Transaction, error) {
 	data, err := core.EncodeTokens(tokens)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (f *Factory) CreateTransaction(ctx context.Context, tokens []*core.Token, r
 	opts.GasLimit = uint64(1000000 * len(tokens)) // in units
 	opts.NoSend = true
 
-	txRaw, err := f.transactor.CreateContract(opts, data, common.HexToAddress(receiver))
+	txRaw, err := f.transactor.CreateContract(opts, data, common.HexToAddress(receiver.Destination))
 	if err != nil {
 		return nil, err
 	}
