@@ -137,7 +137,7 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 			return err
 		}
 
-		if tx.Gas.GreaterThan(snapshot.Amount.Div(decimal.New(4, 0))) {
+		if w.system.Gas.Min.GreaterThan(snapshot.Amount) || tx.Gas.Mul(w.system.Gas.StrictMultiplier).GreaterThan(snapshot.Amount) {
 			return w.refundSnapshot(ctx, snapshot.TraceID, snapshot.OpponentID, snapshot.AssetID, snapshot.Amount, "payment too low to cover the gas fee")
 		}
 

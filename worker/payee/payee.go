@@ -24,6 +24,7 @@ type (
 	Worker struct {
 		clientID string
 
+		system       core.System
 		properties   property.Store
 		wallets      core.WalletStore
 		walletz      core.WalletService
@@ -36,6 +37,7 @@ type (
 
 func New(
 	cfg Config,
+	system core.System,
 	properties property.Store,
 	orders core.OrderStore,
 	transactions core.TransactionStore,
@@ -54,6 +56,7 @@ func New(
 
 	return &Worker{
 		clientID:     cfg.ClientID,
+		system:       system,
 		properties:   properties,
 		wallets:      wallets,
 		walletz:      walletz,

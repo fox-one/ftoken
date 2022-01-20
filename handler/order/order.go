@@ -9,7 +9,6 @@ import (
 	"github.com/fox-one/pkg/httputil/param"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/go-chi/chi"
-	"github.com/shopspring/decimal"
 	"github.com/twitchtv/twirp"
 )
 
@@ -86,7 +85,9 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 			return
 		}
 
-		order.FeeAmount = tx.Gas.Mul(decimal.New(5, 0))
+		if order.FeeAmount = tx.Gas.Mul(system.Gas.Multiplier); order.FeeAmount.LessThan(system.Gas.Min) {
+			order.FeeAmount = system.Gas.Min
+		}
 		render.JSON(w, order)
 	}
 }

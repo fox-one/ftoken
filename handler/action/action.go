@@ -11,7 +11,6 @@ import (
 	"github.com/fox-one/pkg/httputil/param"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/lib/pq"
-	"github.com/shopspring/decimal"
 	"github.com/twitchtv/twirp"
 )
 
@@ -69,10 +68,15 @@ func HandleCreateAction(system core.System, walletz core.WalletService, factorie
 			return
 		}
 
+		gas := tx.Gas.Mul(system.Gas.Multiplier)
+		if gas.LessThan(system.Gas.Min) {
+			gas = system.Gas.Min
+		}
+
 		transfer := &core.Transfer{
 			TraceID: body.TraceID,
 			AssetID: factory.GasAsset(),
-			Amount:  tx.Gas.Mul(decimal.New(5, 0)),
+			Amount:  gas,
 			Memo:    memo,
 
 			Opponents: pq.StringArray{system.ClientID},

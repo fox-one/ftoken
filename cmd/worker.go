@@ -53,11 +53,17 @@ var workerCmd = &cobra.Command{
 		transactions := provideTransactionStore(database)
 		properties := providePropertyStore(database)
 		factories := provideAllFactories()
+		system, err := provideSystem(ctx, client, factories)
+		if err != nil {
+			cmd.PrintErrf("provideSystem failed: %v", err)
+			return
+		}
 
 		workers := []worker.Worker{
 			cashier.New(wallets, walletz),
 			payee.New(
 				payee.Config{ClientID: cfg.Dapp.ClientID},
+				system,
 				properties,
 				orders,
 				transactions,
