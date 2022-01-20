@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/mixin-sdk-go"
+	"github.com/golang-jwt/jwt"
 	"golang.org/x/sync/singleflight"
 )
 
