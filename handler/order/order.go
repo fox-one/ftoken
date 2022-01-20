@@ -88,8 +88,9 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 			return
 		}
 
-		if order.FeeAmount = tx.Gas.Mul(system.Gas.Multiplier); order.FeeAmount.LessThan(system.Gas.Min) {
-			order.FeeAmount = system.Gas.Min
+		order.FeeAmount = tx.Gas.Mul(system.Gas.Multiplier)
+		if min, ok := system.Gas.Mins[factory.Platform()]; ok && order.FeeAmount.LessThan(min) {
+			order.FeeAmount = min
 		}
 		render.JSON(w, order)
 	}

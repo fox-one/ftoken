@@ -89,10 +89,12 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 			return err
 		}
 
-		if snapshot.Amount.GreaterThan(w.system.Gas.Min) || snapshot.Amount.GreaterThan(tx.Gas.Mul(w.system.Gas.StrictMultiplier)) {
-			order.State = core.OrderStatePaid
-		} else {
+		if snapshot.Amount.LessThan(tx.Gas.Mul(w.system.Gas.StrictMultiplier)) {
 			order.State = core.OrderStateFailed
+		} else if min, ok := w.system.Gas.Mins[order.Platform]; ok && snapshot.Amount.LessThan(min) {
+			order.State = core.OrderStateFailed
+		} else {
+			order.State = core.OrderStatePaid
 		}
 
 		if err := w.orders.Update(ctx, order); err != nil {

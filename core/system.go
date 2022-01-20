@@ -1,10 +1,13 @@
 package core
 
-import "github.com/shopspring/decimal"
+import (
+	"github.com/fox-one/pkg/number"
+	"github.com/shopspring/decimal"
+)
 
 type (
 	Gas struct {
-		Min              decimal.Decimal
+		Mins             number.Values
 		Multiplier       decimal.Decimal
 		StrictMultiplier decimal.Decimal
 	}

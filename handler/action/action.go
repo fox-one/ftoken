@@ -68,8 +68,8 @@ func HandleCreateAction(system core.System, walletz core.WalletService, factorie
 			return
 		}
 		gas := tx.Gas.Mul(system.Gas.Multiplier)
-		if gas.LessThan(system.Gas.Min) {
-			gas = system.Gas.Min
+		if min, ok := system.Gas.Mins[factory.Platform()]; ok && gas.LessThan(min) {
+			gas = min
 		}
 
 		transfer := &core.Transfer{

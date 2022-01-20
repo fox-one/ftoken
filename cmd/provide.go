@@ -22,7 +22,7 @@ func provideSystem(ctx context.Context, client *mixin.Client, factories []core.F
 		Version:      rootCmd.Version,
 		Addresses:    make(map[string]*core.Address, len(factories)),
 		Gas: core.Gas{
-			Min:              cfg.Gas.Min,
+			Mins:             cfg.Gas.Mins,
 			Multiplier:       cfg.Gas.Multiplier,
 			StrictMultiplier: cfg.Gas.StrictMultiplier,
 		},
