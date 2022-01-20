@@ -15,7 +15,7 @@ func init() {
 			return err
 		}
 
-		if err := tx.AddUniqueIndex("idx_transactions_trace", "trace_id").Error; err != nil {
+		if err := tx.AddIndex("idx_transactions_trace", "trace_id").Error; err != nil {
 			return err
 		}
 
@@ -58,13 +58,21 @@ func toUpdateParams(tx *core.Transaction) map[string]interface{} {
 	}
 }
 
-func (s *transactionStore) Find(ctx context.Context, traceID string) (*core.Transaction, error) {
+func (s *transactionStore) Find(ctx context.Context, hash string) (*core.Transaction, error) {
 	var tx core.Transaction
-	if db := s.db.View().Where("trace_id = ?", traceID).First(&tx); db.Error != nil {
+	if db := s.db.View().Where("hash = ?", hash).First(&tx); db.Error != nil {
 		if store.IsErrNotFound(db.Error) {
 			return &core.Transaction{}, nil
 		}
 		return nil, db.Error
 	}
 	return &tx, nil
+}
+
+func (s *transactionStore) FindTrace(ctx context.Context, traceID string) ([]*core.Transaction, error) {
+	var txs []*core.Transaction
+	if err := s.db.View().Where("trace_id = ?", traceID).Find(&txs).Error; err != nil {
+		return nil, err
+	}
+	return txs, nil
 }

@@ -3,84 +3,12 @@ package payee
 import (
 	"context"
 	"encoding/base64"
-	"errors"
-	"fmt"
-	"time"
 
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/ftoken/pkg/mtg"
 	"github.com/fox-one/pkg/logger"
-	"github.com/fox-one/pkg/uuid"
-	"github.com/lib/pq"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
-
-func (w *Worker) loopSnapshots(ctx context.Context) error {
-	log := logger.FromContext(ctx).WithField("loop", "snapshots")
-	ctx = logger.WithContext(ctx, log)
-
-	dur := time.Millisecond
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(dur):
-			if err := w.loopSnapshotOnce(ctx); err == nil {
-				dur = 100 * time.Millisecond
-			} else {
-				dur = time.Second
-			}
-		}
-	}
-}
-
-func (w *Worker) loopSnapshotOnce(ctx context.Context) error {
-	const LIMIT = 500
-	log := logger.FromContext(ctx)
-
-	v, err := w.properties.Get(ctx, snapshotCheckpoint)
-	if err != nil {
-		log.WithError(err).Errorln("properties.Get")
-		return err
-	}
-
-	var (
-		offset    = v.Time()
-		newOffset = offset
-	)
-
-	snapshots, err := w.walletz.ListSnapshots(ctx, offset, LIMIT)
-	if err != nil {
-		log.WithError(err).Errorln("list snapshots")
-		return err
-	}
-
-	for _, snapshot := range snapshots {
-		newOffset = snapshot.CreatedAt
-		if snapshot.UserID != w.clientID || snapshot.Amount.IsNegative() || snapshot.OpponentID == "" {
-			continue
-		}
-
-		snapshotKey := fmt.Sprintf("snapshot:%s", snapshot.SnapshotID)
-		if _, ok := w.cache.Get(snapshotKey); !ok {
-			if err := w.handleSnapshot(ctx, snapshot); err != nil {
-				return err
-			}
-			w.cache.SetDefault(snapshotKey, true)
-		}
-	}
-
-	if newOffset.Equal(offset) {
-		return errors.New("empty list")
-	}
-
-	if err := w.properties.Save(ctx, snapshotCheckpoint, newOffset); err != nil {
-		log.WithError(err).Errorln("properties.Save", snapshotCheckpoint)
-		return err
-	}
-	return nil
-}
 
 func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) error {
 	factory, ok := w.factories[snapshot.AssetID]
@@ -91,25 +19,11 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"trace":     snapshot.TraceID,
 		"pay_asset": snapshot.AssetID,
-		"asset":     snapshot.AssetID,
 		"amount":    snapshot.Amount,
 		"memo":      snapshot.Memo,
+		"platform":  factory.Platform(),
 	})
 	ctx = logger.WithContext(ctx, log)
-
-	data := []byte(snapshot.Memo)
-	if d, err := base64.StdEncoding.DecodeString(snapshot.Memo); err == nil {
-		data = d
-	}
-
-	var (
-		tokens   core.Tokens
-		receiver core.Address
-	)
-
-	if _, err := mtg.Scan(data, &tokens, &receiver); err != nil || len(tokens) == 0 || receiver.Destination == "" {
-		return w.refundSnapshot(ctx, snapshot.TraceID, snapshot.OpponentID, snapshot.AssetID, snapshot.Amount)
-	}
 
 	order, err := w.orders.Find(ctx, snapshot.TraceID)
 	if err != nil {
@@ -122,52 +36,75 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 			CreatedAt: snapshot.CreatedAt,
 			Version:   1,
 			TraceID:   snapshot.TraceID,
-			State:     core.OrderStatePaid,
+			State:     core.OrderStateNew,
 			UserID:    snapshot.OpponentID,
-			Receiver:  &receiver,
 			FeeAsset:  snapshot.AssetID,
 			FeeAmount: snapshot.Amount,
 			Platform:  factory.Platform(),
-			Tokens:    tokens,
 		}
 
-		tx, err := factory.CreateTransaction(ctx, tokens, &receiver)
-		if err != nil {
-			log.WithError(err).Errorln("factory.CreateTransaction")
-			return err
+		data := []byte(snapshot.Memo)
+		if d, err := base64.StdEncoding.DecodeString(snapshot.Memo); err == nil {
+			data = d
 		}
 
-		if w.system.Gas.Min.GreaterThan(snapshot.Amount) || tx.Gas.Mul(w.system.Gas.StrictMultiplier).GreaterThan(snapshot.Amount) {
-			return w.refundSnapshot(ctx, snapshot.TraceID, snapshot.OpponentID, snapshot.AssetID, snapshot.Amount, "payment too low to cover the gas fee")
+		if data, err := mtg.Scan(data, &order.Tokens); err != nil || len(order.Tokens) == 0 {
+			log.Infoln("refund: scan tokens failed")
+			return w.refundOrder(ctx, order)
+		} else {
+			var receiver core.Address
+			if _, err := mtg.Scan(data, &receiver); err == nil && receiver.Destination != "" {
+				order.Receiver = &receiver
+			}
 		}
 
 		if err := w.orders.Create(ctx, order); err != nil {
 			log.WithError(err).Errorln("orders.Create")
 			return err
 		}
+	} else {
+		if order.FeeAsset != snapshot.AssetID {
+			log.WithField("order_asset", order.FeeAsset).Infoln("skip: asset not matched")
+			return nil
+		}
+		if order.UserID == "" {
+			order.UserID = snapshot.OpponentID
+		}
+	}
+	if order.Receiver == nil && snapshot.OpponentID == "" {
+		log.Infoln("skip: empty reciever / address")
+		return nil
 	}
 
-	return nil
-}
+	if order.State == core.OrderStateNew {
+		order.FeeAmount = snapshot.Amount
+		receiver := order.Receiver
+		if receiver == nil {
+			receiver = w.system.Addresses[order.FeeAsset]
+		}
 
-func (w *Worker) refundSnapshot(ctx context.Context, trace, opponent, asset string, amount decimal.Decimal, msg ...string) error {
-	memo := "refund " + trace
-	if len(msg) > 0 && msg[0] != "" {
-		memo = memo + ", " + msg[0]
+		tx, err := factory.CreateTransaction(ctx, order.Tokens, receiver)
+		if err != nil {
+			log.WithError(err).Errorln("factory.CreateTransaction")
+			return err
+		}
+
+		if snapshot.Amount.GreaterThan(w.system.Gas.Min) || snapshot.Amount.GreaterThan(tx.Gas.Mul(w.system.Gas.StrictMultiplier)) {
+			order.State = core.OrderStatePaid
+		} else {
+			order.State = core.OrderStateFailed
+		}
+
+		if err := w.orders.Update(ctx, order); err != nil {
+			log.WithError(err).Errorln("orders.Update")
+			return err
+		}
 	}
 
-	if err := w.wallets.CreateTransfers(ctx, []*core.Transfer{
-		{
-			TraceID:   uuid.Modify(trace, "refund"),
-			AssetID:   asset,
-			Amount:    amount,
-			Memo:      memo,
-			Threshold: 1,
-			Opponents: pq.StringArray{opponent},
-		},
-	}); err != nil {
-		logger.FromContext(ctx).Errorln("CreateTransfers failed")
-		return err
+	if order.State == core.OrderStateFailed {
+		log.Infoln("refund: scan tokens failed")
+		return w.refundOrder(ctx, order)
 	}
+
 	return nil
 }

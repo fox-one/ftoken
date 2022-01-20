@@ -21,14 +21,16 @@ const (
 
 type (
 	Snapshot struct {
-		CreatedAt  time.Time       `json:"created_at,omitempty"`
-		SnapshotID string          `sql:"type:char(36)" json:"snapshot_id,omitempty"`
-		UserID     string          `sql:"type:char(36)" json:"user_id,omitempty"`
-		OpponentID string          `sql:"type:char(36)" json:"opponent_id,omitempty"`
-		TraceID    string          `sql:"type:char(36)" json:"trace_id,omitempty"`
-		AssetID    string          `sql:"type:char(36)" json:"asset_id,omitempty"`
-		Amount     decimal.Decimal `sql:"type:decimal(64,8)" json:"amount,omitempty"`
-		Memo       string          `sql:"size:200" json:"memo,omitempty"`
+		CreatedAt       time.Time       `json:"created_at,omitempty"`
+		SnapshotID      string          `json:"snapshot_id,omitempty"`
+		UserID          string          `json:"user_id,omitempty"`
+		OpponentID      string          `json:"opponent_id,omitempty"`
+		TraceID         string          `json:"trace_id,omitempty"`
+		AssetID         string          `json:"asset_id,omitempty"`
+		Source          string          `json:"source,omitempty"`
+		Amount          decimal.Decimal `json:"amount,omitempty"`
+		Memo            string          `json:"memo,omitempty"`
+		TransactionHash string          `json:"transaction_hash,omitempty"`
 	}
 
 	TransferPriority int

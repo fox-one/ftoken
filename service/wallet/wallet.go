@@ -31,7 +31,7 @@ func (m *mixinBot) ListSnapshots(ctx context.Context, offset time.Time, limit in
 	if err != nil {
 		return nil, err
 	}
-	return convertSnapshots(items), nil
+	return m.toSnapshots(ctx, items)
 }
 
 func (m *mixinBot) Transfer(ctx context.Context, req *core.Transfer) error {
@@ -86,19 +86,31 @@ func (s *mixinBot) ReqTransfer(ctx context.Context, transfer *core.Transfer) (st
 	return payment.CodeID, nil
 }
 
-func convertSnapshots(items []*mixin.Snapshot) []*core.Snapshot {
+func (m *mixinBot) toSnapshots(ctx context.Context, items []*mixin.Snapshot) ([]*core.Snapshot, error) {
 	var snapshots = make([]*core.Snapshot, len(items))
 	for i, s := range items {
-		snapshots[i] = &core.Snapshot{
-			CreatedAt:  s.CreatedAt,
-			SnapshotID: s.SnapshotID,
-			UserID:     s.UserID,
-			OpponentID: s.OpponentID,
-			TraceID:    s.TraceID,
-			AssetID:    s.AssetID,
-			Amount:     s.Amount,
-			Memo:       s.Memo,
+		snapshot := &core.Snapshot{
+			CreatedAt:       s.CreatedAt,
+			Source:          s.Source,
+			SnapshotID:      s.SnapshotID,
+			UserID:          s.UserID,
+			OpponentID:      s.OpponentID,
+			TraceID:         s.TraceID,
+			AssetID:         s.AssetID,
+			Amount:          s.Amount,
+			Memo:            s.Memo,
+			TransactionHash: s.TransactionHash,
 		}
+
+		if s.Source == "DEPOSIT_CONFIRMED" && s.UserID != "" {
+			s, err := m.client.ReadSnapshot(ctx, s.SnapshotID)
+			if err != nil {
+				return nil, err
+			}
+			snapshot.TransactionHash = s.TransactionHash
+		}
+
+		snapshots[i] = snapshot
 	}
-	return snapshots
+	return snapshots, nil
 }

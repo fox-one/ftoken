@@ -1,6 +1,7 @@
 package order
 
 import (
+	"bytes"
 	"net/http"
 
 	"github.com/fox-one/ftoken/core"
@@ -20,7 +21,6 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 			TraceID         string        `json:"trace_id,omitempty"`
 			Platform        string        `json:"platform,omitempty"`
 			Tokens          core.Tokens   `json:"tokens,omitempty"`
-			UserID          string        `json:"user_id,omitempty"`
 			ReceiverAddress *core.Address `json:"receiver_address,omitempty"`
 		}
 
@@ -61,8 +61,7 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 			order = &core.Order{
 				Version:  1,
 				TraceID:  body.TraceID,
-				State:    core.OrderStatePending,
-				UserID:   body.UserID,
+				State:    core.OrderStateNew,
 				FeeAsset: factory.GasAsset(),
 				Platform: body.Platform,
 				Tokens:   body.Tokens,
@@ -74,9 +73,13 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 				render.Error(w, twirp.InternalErrorWith(err))
 				return
 			}
-		} else if order.UserID != "" && order.UserID != body.UserID {
-			render.Error(w, twirp.NewErrorf(twirp.AlreadyExists, "order with trace already exists"))
-			return
+		} else {
+			t1, _ := core.EncodeTokens(order.Tokens)
+			t2, _ := core.EncodeTokens(body.Tokens)
+			if order.UserID != "" && order.Receiver.Destination != body.ReceiverAddress.Destination || !bytes.Equal(t1, t2) {
+				render.Error(w, twirp.NewErrorf(twirp.AlreadyExists, "order with trace already exists"))
+				return
+			}
 		}
 
 		tx, err := factory.CreateTransaction(ctx, body.Tokens, system.Addresses[factory.GasAsset()])

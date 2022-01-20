@@ -47,9 +47,12 @@ func (s *orderStore) Update(ctx context.Context, order *core.Order) error {
 
 func toUpdateParams(order *core.Order) map[string]interface{} {
 	return map[string]interface{}{
-		"version": order.Version + 1,
-		"state":   order.State,
-		"result":  order.Result,
+		"version":     order.Version + 1,
+		"user_id":     order.UserID,
+		"state":       order.State,
+		"result":      order.Result,
+		"gas_usage":   order.GasUsage,
+		"transaction": order.Transaction,
 	}
 }
 
@@ -69,7 +72,7 @@ func (s *orderStore) List(ctx context.Context, state core.OrderState, limit int)
 	query := s.db.View().Limit(limit)
 
 	switch state {
-	case core.OrderStatePending, core.OrderStatePaid, core.OrderStateFailed, core.OrderStateDone:
+	case core.OrderStateNew, core.OrderStateProcessing, core.OrderStatePaid, core.OrderStateFailed, core.OrderStateDone:
 		query = query.Where("state = ?", state)
 	}
 

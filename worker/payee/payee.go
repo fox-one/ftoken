@@ -2,6 +2,8 @@ package payee
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -9,7 +11,6 @@ import (
 	"github.com/fox-one/pkg/logger"
 	"github.com/fox-one/pkg/property"
 	"github.com/patrickmn/go-cache"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -71,12 +72,72 @@ func (w *Worker) Run(ctx context.Context) error {
 	log := logger.FromContext(ctx).WithField("worker", "payee")
 	ctx = logger.WithContext(ctx, log)
 
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		return w.loopSnapshots(ctx)
-	})
-	g.Go(func() error {
-		return w.loopPaidOrders(ctx)
-	})
-	return g.Wait()
+	dur := time.Millisecond
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(dur):
+			if err := w.run(ctx); err == nil {
+				dur = 100 * time.Millisecond
+			} else {
+				dur = time.Second
+			}
+		}
+	}
+}
+
+func (w *Worker) run(ctx context.Context) error {
+	const LIMIT = 500
+	log := logger.FromContext(ctx)
+
+	v, err := w.properties.Get(ctx, snapshotCheckpoint)
+	if err != nil {
+		log.WithError(err).Errorln("properties.Get")
+		return err
+	}
+
+	var (
+		offset    = v.Time()
+		newOffset = offset
+	)
+
+	snapshots, err := w.walletz.ListSnapshots(ctx, offset, LIMIT)
+	if err != nil {
+		log.WithError(err).Errorln("list snapshots")
+		return err
+	}
+
+	for _, snapshot := range snapshots {
+		newOffset = snapshot.CreatedAt
+		if snapshot.UserID != w.clientID || snapshot.Amount.IsNegative() {
+			continue
+		}
+
+		snapshotKey := fmt.Sprintf("snapshot:%s", snapshot.SnapshotID)
+		if _, ok := w.cache.Get(snapshotKey); !ok {
+			switch snapshot.Source {
+			case "DEPOSIT_CONFIRMED":
+				if err := w.handleDepositSnapshot(ctx, snapshot); err != nil {
+					return err
+				}
+
+			default:
+				if err := w.handleSnapshot(ctx, snapshot); err != nil {
+					return err
+				}
+			}
+			w.cache.SetDefault(snapshotKey, true)
+		}
+	}
+
+	if newOffset.Equal(offset) {
+		return errors.New("empty list")
+	}
+
+	if err := w.properties.Save(ctx, snapshotCheckpoint, newOffset); err != nil {
+		log.WithError(err).Errorln("properties.Save", snapshotCheckpoint)
+		return err
+	}
+	return nil
 }

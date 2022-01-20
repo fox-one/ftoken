@@ -56,7 +56,8 @@ type (
 	TransactionStore interface {
 		Create(ctx context.Context, tx *Transaction) error
 		Update(ctx context.Context, tx *Transaction) error
-		Find(ctx context.Context, traceID string) (*Transaction, error)
+		Find(ctx context.Context, hash string) (*Transaction, error)
+		FindTrace(ctx context.Context, traceID string) ([]*Transaction, error)
 	}
 )
 

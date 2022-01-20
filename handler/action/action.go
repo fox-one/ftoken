@@ -39,6 +39,13 @@ func HandleCreateAction(system core.System, walletz core.WalletService, factorie
 			return
 		}
 
+		memoBts, err := mtg.Encode(body.Tokens, body.Receiver)
+		if err != nil {
+			render.Error(w, twirp.InternalErrorWith(err))
+			return
+		}
+		memo := base64.StdEncoding.EncodeToString(memoBts)
+
 		var factory core.Factory
 		for _, f := range factories {
 			if f.Platform() != body.Platform {
@@ -55,19 +62,11 @@ func HandleCreateAction(system core.System, walletz core.WalletService, factorie
 			body.Receiver = *system.Addresses[factory.GasAsset()]
 		}
 
-		memoBts, err := mtg.Encode(body.Tokens, body.Receiver)
-		if err != nil {
-			render.Error(w, twirp.InternalErrorWith(err))
-			return
-		}
-		memo := base64.StdEncoding.EncodeToString(memoBts)
-
 		tx, err := factory.CreateTransaction(ctx, body.Tokens, &body.Receiver)
 		if err != nil {
 			render.Error(w, twirp.InternalErrorWith(err))
 			return
 		}
-
 		gas := tx.Gas.Mul(system.Gas.Multiplier)
 		if gas.LessThan(system.Gas.Min) {
 			gas = system.Gas.Min
