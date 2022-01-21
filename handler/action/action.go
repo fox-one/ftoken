@@ -7,10 +7,8 @@ import (
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/ftoken/handler/render"
 	"github.com/fox-one/ftoken/pkg/mtg"
-	"github.com/fox-one/mixin-sdk-go"
 	"github.com/fox-one/pkg/httputil/param"
 	"github.com/fox-one/pkg/uuid"
-	"github.com/lib/pq"
 	"github.com/twitchtv/twirp"
 )
 
@@ -72,27 +70,11 @@ func HandleCreateAction(system core.System, walletz core.WalletService, factorie
 			gas = min
 		}
 
-		transfer := &core.Transfer{
-			TraceID: body.TraceID,
-			AssetID: factory.GasAsset(),
-			Amount:  gas,
-			Memo:    memo,
-
-			Opponents: pq.StringArray{system.ClientID},
-		}
-
-		code, err := walletz.ReqTransfer(ctx, transfer)
-		if err != nil {
-			render.Error(w, twirp.InternalErrorWith(err))
-			return
-		}
-
 		render.JSON(w, render.H{
-			"asset_id": transfer.AssetID,
-			"amount":   transfer.Amount,
-			"memo":     memo,
-			"code":     code,
-			"code_url": mixin.URL.Codes(code),
+			"opponent_id": system.ClientID,
+			"asset_id":    factory.GasAsset(),
+			"amount":      gas,
+			"memo":        memo,
 		})
 	}
 }

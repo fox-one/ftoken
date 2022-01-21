@@ -9,6 +9,7 @@ import (
 	"github.com/fox-one/ftoken/handler/ip"
 	"github.com/fox-one/ftoken/handler/order"
 	"github.com/fox-one/ftoken/handler/render"
+	"github.com/fox-one/ftoken/handler/system"
 	"github.com/go-chi/chi"
 	"github.com/twitchtv/twirp"
 )
@@ -47,7 +48,9 @@ func (s Server) Handle() http.Handler {
 		render.Error(w, twirp.NotFoundError("not found"))
 	})
 
-	r.Post("/oauth", auth.HandleOauth(&s.system))
+	r.Get("/info", system.HandleInfo(s.system, s.factories))
+
+	r.Post("/oauth", auth.HandleOauth(s.system))
 
 	r.Post("/actions", action.HandleCreateAction(s.system, s.walletz, s.factories))
 

@@ -10,7 +10,7 @@ import (
 	"github.com/twitchtv/twirp"
 )
 
-func HandleOauth(system *core.System) http.HandlerFunc {
+func HandleOauth(system core.System) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Code string `json:"code,omitempty" valid:"minstringlength(6),required"`
