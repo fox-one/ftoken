@@ -22,6 +22,7 @@ import (
 	"github.com/fox-one/ftoken/handler/hc"
 	"github.com/fox-one/ftoken/worker"
 	"github.com/fox-one/ftoken/worker/cashier"
+	"github.com/fox-one/ftoken/worker/order"
 	"github.com/fox-one/ftoken/worker/payee"
 	"github.com/fox-one/pkg/logger"
 	"github.com/go-chi/chi"
@@ -69,6 +70,13 @@ var workerCmd = &cobra.Command{
 				transactions,
 				wallets,
 				walletz,
+				factories,
+			),
+			order.New(
+				system,
+				orders,
+				transactions,
+				wallets,
 				factories,
 			),
 		}

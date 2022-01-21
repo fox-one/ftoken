@@ -66,7 +66,11 @@ func (w *Worker) handlePaidOrder(ctx context.Context, order *core.Order) error {
 	}
 
 	if tx.ID == 0 {
-		tx, err = factory.CreateTransaction(ctx, order.Tokens, order.Receiver)
+		var receiver = order.Receiver
+		if receiver == nil || receiver.Destination == "" {
+			receiver = w.system.Addresses[order.FeeAsset]
+		}
+		tx, err = factory.CreateTransaction(ctx, order.Tokens, receiver)
 		if err != nil {
 			log.WithError(err).Errorln("factory.CreateTransaction failed")
 			return err
