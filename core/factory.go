@@ -38,7 +38,7 @@ type (
 		UpdatedAt time.Time        `json:"updated_at"`
 		Version   int              `json:"version"`
 		TraceID   string           `sql:"size:36;" json:"trace_id,omitempty"`
-		Hash      string           `json:"hash,omitempty"`
+		Hash      string           `sql:"size:127;" json:"hash,omitempty"`
 		Raw       string           `sql:"type:longtext;" json:"raw,omitempty"`
 		State     TransactionState `json:"state,omitempty"`
 		Tokens    Tokens           `sql:"type:longtext;" json:"tokens,omitempty"`
