@@ -66,7 +66,7 @@ func New(ethurl, priv, factoryContract string) *Factory {
 }
 
 func (*Factory) Platform() string {
-	return "quorum"
+	return "Ethereum"
 }
 
 func (*Factory) GasAsset() string {
