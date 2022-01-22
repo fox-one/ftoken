@@ -51,6 +51,7 @@ func toUpdateParams(order *core.Order) map[string]interface{} {
 		"user_id":     order.UserID,
 		"state":       order.State,
 		"result":      order.Result,
+		"fee_amount":  order.FeeAmount,
 		"gas_usage":   order.GasUsage,
 		"transaction": order.Transaction,
 	}

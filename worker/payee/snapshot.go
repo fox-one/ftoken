@@ -70,7 +70,6 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 		if order.UserID == "" {
 			order.UserID = snapshot.OpponentID
 		}
-		order.FeeAmount = snapshot.Amount
 	}
 	if order.Receiver == nil && snapshot.OpponentID == "" {
 		log.Infoln("skip: empty reciever / address")
