@@ -79,7 +79,7 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 	if order.State == core.OrderStateNew {
 		order.FeeAmount = snapshot.Amount
 		receiver := order.Receiver
-		if receiver == nil {
+		if receiver == nil || receiver.Destination == "" {
 			receiver = w.system.Addresses[order.FeeAsset]
 		}
 
