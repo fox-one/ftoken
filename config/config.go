@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/fox-one/mixin-sdk-go"
-	"github.com/fox-one/pkg/number"
 	"github.com/fox-one/pkg/store/db"
 	"github.com/shopspring/decimal"
 )
@@ -28,7 +27,10 @@ type (
 	}
 
 	Gas struct {
-		Mins             number.Values   `json:"mins"`
+		Mins []struct {
+			Platform string          `json:"platform"`
+			Min      decimal.Decimal `json:"min"`
+		} `json:"mins"`
 		Multiplier       decimal.Decimal `json:"multiplier"`
 		StrictMultiplier decimal.Decimal `json:"strict_multiplier"`
 	}

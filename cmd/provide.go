@@ -10,6 +10,7 @@ import (
 	"github.com/fox-one/ftoken/store/transaction"
 	"github.com/fox-one/ftoken/store/wallet"
 	"github.com/fox-one/mixin-sdk-go"
+	"github.com/fox-one/pkg/number"
 	"github.com/fox-one/pkg/property"
 	"github.com/fox-one/pkg/store/db"
 	propertystore "github.com/fox-one/pkg/store/property"
@@ -22,10 +23,14 @@ func provideSystem(ctx context.Context, client *mixin.Client, factories []core.F
 		Version:      rootCmd.Version,
 		Addresses:    make(map[string]*core.Address, len(factories)),
 		Gas: core.Gas{
-			Mins:             cfg.Gas.Mins,
+			Mins:             make(number.Values, len(cfg.Gas.Mins)),
 			Multiplier:       cfg.Gas.Multiplier,
 			StrictMultiplier: cfg.Gas.StrictMultiplier,
 		},
+	}
+
+	for _, val := range cfg.Gas.Mins {
+		system.Gas.Mins.Set(val.Platform, val.Min)
 	}
 
 	for _, factory := range factories {
