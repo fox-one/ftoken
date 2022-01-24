@@ -54,6 +54,8 @@ func (s Server) Handle() http.Handler {
 
 	r.Post("/actions", action.HandleCreateAction(s.system, s.walletz, s.factories))
 
+	r.Post("/estimate-gas", order.HandleEstimateGas(s.system, s.factories))
+
 	r.Route("/orders", func(r chi.Router) {
 		r.Post("/", order.HandleCreateOrder(s.system, s.walletz, s.orders, s.factories))
 		r.Get("/{trace_id}", order.HandleFetchOrder(s.orders))
