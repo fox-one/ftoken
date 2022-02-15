@@ -48,7 +48,7 @@ type (
 	Factory interface {
 		Platform() string
 		GasAsset() string
-		CreateTransaction(ctx context.Context, tokens []*Token, receiver *Address) (*Transaction, error)
+		CreateTransaction(ctx context.Context, tokens []*Token, trace string) (*Transaction, error)
 		SendTransaction(ctx context.Context, tx *Transaction) error
 		ReadTransaction(ctx context.Context, hash string) (*Transaction, error)
 	}
