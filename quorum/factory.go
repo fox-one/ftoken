@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fox-one/ftoken/core"
+	"github.com/gofrs/uuid"
 	"github.com/shopspring/decimal"
 )
 
@@ -73,7 +74,7 @@ func (*Factory) GasAsset() string {
 	return EthAsset
 }
 
-func (f *Factory) CreateTransaction(ctx context.Context, tokens []*core.Token, receiver *core.Address) (*core.Transaction, error) {
+func (f *Factory) CreateTransaction(ctx context.Context, tokens []*core.Token, trace string) (*core.Transaction, error) {
 	data, err := core.EncodeTokens(tokens)
 	if err != nil {
 		return nil, err
@@ -106,7 +107,14 @@ func (f *Factory) CreateTransaction(ctx context.Context, tokens []*core.Token, r
 	opts.GasLimit = uint64(1000000 * len(tokens)) // in units
 	opts.NoSend = true
 
-	txRaw, err := f.transactor.CreateContract(opts, data, common.HexToAddress(receiver.Destination))
+	var traceID = &big.Int{}
+	if trace != "" {
+		if trace, err := uuid.FromString(trace); err == nil {
+			traceID.SetBytes(trace.Bytes())
+		}
+	}
+
+	txRaw, err := f.transactor.CreateContractRaw(opts, data, traceID)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +195,7 @@ func (f *Factory) ReadTransaction(ctx context.Context, hash string) (*core.Trans
 		}
 		for i := 0; i < len(receipt.Logs)-1; i = i + 2 {
 			address := receipt.Logs[i].Address
-			contract, err := f.quorum.ReadContract(opts, address)
+			contract, err := f.quorum.ReadToken(opts, address)
 			if err != nil {
 				return nil, err
 			}

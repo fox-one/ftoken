@@ -26,16 +26,17 @@ var (
 	_ = event.NewSubscription
 )
 
-// FTokenFactoryContract is an auto generated low-level Go binding around an user-defined struct.
-type FTokenFactoryContract struct {
+// FTokenFactoryToken is an auto generated low-level Go binding around an user-defined struct.
+type FTokenFactoryToken struct {
 	Name   string
 	Symbol string
 	Cap    *big.Int
+	Trace  *big.Int
 	Minter common.Address
 }
 
 // QuorumABI is the input ABI used to generate the binding from.
-const QuorumABI = "[{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"raw\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"}],\"name\":\"createContract\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_contract\",\"type\":\"address\"}],\"name\":\"readContract\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"cap\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"minter\",\"type\":\"address\"}],\"internalType\":\"structFTokenFactory.Contract\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const QuorumABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"cap\",\"type\":\"uint256\"},{\"internalType\":\"uint128\",\"name\":\"trace\",\"type\":\"uint128\"}],\"name\":\"createContract\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"raw\",\"type\":\"bytes\"},{\"internalType\":\"uint128\",\"name\":\"trace\",\"type\":\"uint128\"}],\"name\":\"createContractRaw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"readToken\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"cap\",\"type\":\"uint256\"},{\"internalType\":\"uint128\",\"name\":\"trace\",\"type\":\"uint128\"},{\"internalType\":\"address\",\"name\":\"minter\",\"type\":\"address\"}],\"internalType\":\"structFTokenFactory.Token\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiver\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"}],\"name\":\"setReceiverAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // Quorum is an auto generated Go binding around an Ethereum contract.
 type Quorum struct {
@@ -179,54 +180,179 @@ func (_Quorum *QuorumTransactorRaw) Transact(opts *bind.TransactOpts, method str
 	return _Quorum.Contract.contract.Transact(opts, method, params...)
 }
 
-// ReadContract is a free data retrieval call binding the contract method 0xdf58812f.
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function readContract(address _contract) view returns((string,string,uint256,address))
-func (_Quorum *QuorumCaller) ReadContract(opts *bind.CallOpts, _contract common.Address) (FTokenFactoryContract, error) {
+// Solidity: function owner() view returns(address)
+func (_Quorum *QuorumCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _Quorum.contract.Call(opts, &out, "readContract", _contract)
+	err := _Quorum.contract.Call(opts, &out, "owner")
 
 	if err != nil {
-		return *new(FTokenFactoryContract), err
+		return *new(common.Address), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(FTokenFactoryContract)).(*FTokenFactoryContract)
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
 
 	return out0, err
 
 }
 
-// ReadContract is a free data retrieval call binding the contract method 0xdf58812f.
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function readContract(address _contract) view returns((string,string,uint256,address))
-func (_Quorum *QuorumSession) ReadContract(_contract common.Address) (FTokenFactoryContract, error) {
-	return _Quorum.Contract.ReadContract(&_Quorum.CallOpts, _contract)
+// Solidity: function owner() view returns(address)
+func (_Quorum *QuorumSession) Owner() (common.Address, error) {
+	return _Quorum.Contract.Owner(&_Quorum.CallOpts)
 }
 
-// ReadContract is a free data retrieval call binding the contract method 0xdf58812f.
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function readContract(address _contract) view returns((string,string,uint256,address))
-func (_Quorum *QuorumCallerSession) ReadContract(_contract common.Address) (FTokenFactoryContract, error) {
-	return _Quorum.Contract.ReadContract(&_Quorum.CallOpts, _contract)
+// Solidity: function owner() view returns(address)
+func (_Quorum *QuorumCallerSession) Owner() (common.Address, error) {
+	return _Quorum.Contract.Owner(&_Quorum.CallOpts)
 }
 
-// CreateContract is a paid mutator transaction binding the contract method 0x5f410828.
+// ReadToken is a free data retrieval call binding the contract method 0x8fddced8.
 //
-// Solidity: function createContract(bytes raw, address receiver) returns()
-func (_Quorum *QuorumTransactor) CreateContract(opts *bind.TransactOpts, raw []byte, receiver common.Address) (*types.Transaction, error) {
-	return _Quorum.contract.Transact(opts, "createContract", raw, receiver)
+// Solidity: function readToken(address _address) view returns((string,string,uint256,uint128,address))
+func (_Quorum *QuorumCaller) ReadToken(opts *bind.CallOpts, _address common.Address) (FTokenFactoryToken, error) {
+	var out []interface{}
+	err := _Quorum.contract.Call(opts, &out, "readToken", _address)
+
+	if err != nil {
+		return *new(FTokenFactoryToken), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(FTokenFactoryToken)).(*FTokenFactoryToken)
+
+	return out0, err
+
 }
 
-// CreateContract is a paid mutator transaction binding the contract method 0x5f410828.
+// ReadToken is a free data retrieval call binding the contract method 0x8fddced8.
 //
-// Solidity: function createContract(bytes raw, address receiver) returns()
-func (_Quorum *QuorumSession) CreateContract(raw []byte, receiver common.Address) (*types.Transaction, error) {
-	return _Quorum.Contract.CreateContract(&_Quorum.TransactOpts, raw, receiver)
+// Solidity: function readToken(address _address) view returns((string,string,uint256,uint128,address))
+func (_Quorum *QuorumSession) ReadToken(_address common.Address) (FTokenFactoryToken, error) {
+	return _Quorum.Contract.ReadToken(&_Quorum.CallOpts, _address)
 }
 
-// CreateContract is a paid mutator transaction binding the contract method 0x5f410828.
+// ReadToken is a free data retrieval call binding the contract method 0x8fddced8.
 //
-// Solidity: function createContract(bytes raw, address receiver) returns()
-func (_Quorum *QuorumTransactorSession) CreateContract(raw []byte, receiver common.Address) (*types.Transaction, error) {
-	return _Quorum.Contract.CreateContract(&_Quorum.TransactOpts, raw, receiver)
+// Solidity: function readToken(address _address) view returns((string,string,uint256,uint128,address))
+func (_Quorum *QuorumCallerSession) ReadToken(_address common.Address) (FTokenFactoryToken, error) {
+	return _Quorum.Contract.ReadToken(&_Quorum.CallOpts, _address)
+}
+
+// Receiver is a free data retrieval call binding the contract method 0xf7260d3e.
+//
+// Solidity: function receiver() view returns(address)
+func (_Quorum *QuorumCaller) Receiver(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _Quorum.contract.Call(opts, &out, "receiver")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// Receiver is a free data retrieval call binding the contract method 0xf7260d3e.
+//
+// Solidity: function receiver() view returns(address)
+func (_Quorum *QuorumSession) Receiver() (common.Address, error) {
+	return _Quorum.Contract.Receiver(&_Quorum.CallOpts)
+}
+
+// Receiver is a free data retrieval call binding the contract method 0xf7260d3e.
+//
+// Solidity: function receiver() view returns(address)
+func (_Quorum *QuorumCallerSession) Receiver() (common.Address, error) {
+	return _Quorum.Contract.Receiver(&_Quorum.CallOpts)
+}
+
+// CreateContract is a paid mutator transaction binding the contract method 0x6adb3a13.
+//
+// Solidity: function createContract(string name, string symbol, uint256 cap, uint128 trace) returns()
+func (_Quorum *QuorumTransactor) CreateContract(opts *bind.TransactOpts, name string, symbol string, cap *big.Int, trace *big.Int) (*types.Transaction, error) {
+	return _Quorum.contract.Transact(opts, "createContract", name, symbol, cap, trace)
+}
+
+// CreateContract is a paid mutator transaction binding the contract method 0x6adb3a13.
+//
+// Solidity: function createContract(string name, string symbol, uint256 cap, uint128 trace) returns()
+func (_Quorum *QuorumSession) CreateContract(name string, symbol string, cap *big.Int, trace *big.Int) (*types.Transaction, error) {
+	return _Quorum.Contract.CreateContract(&_Quorum.TransactOpts, name, symbol, cap, trace)
+}
+
+// CreateContract is a paid mutator transaction binding the contract method 0x6adb3a13.
+//
+// Solidity: function createContract(string name, string symbol, uint256 cap, uint128 trace) returns()
+func (_Quorum *QuorumTransactorSession) CreateContract(name string, symbol string, cap *big.Int, trace *big.Int) (*types.Transaction, error) {
+	return _Quorum.Contract.CreateContract(&_Quorum.TransactOpts, name, symbol, cap, trace)
+}
+
+// CreateContractRaw is a paid mutator transaction binding the contract method 0x990ac85d.
+//
+// Solidity: function createContractRaw(bytes raw, uint128 trace) returns()
+func (_Quorum *QuorumTransactor) CreateContractRaw(opts *bind.TransactOpts, raw []byte, trace *big.Int) (*types.Transaction, error) {
+	return _Quorum.contract.Transact(opts, "createContractRaw", raw, trace)
+}
+
+// CreateContractRaw is a paid mutator transaction binding the contract method 0x990ac85d.
+//
+// Solidity: function createContractRaw(bytes raw, uint128 trace) returns()
+func (_Quorum *QuorumSession) CreateContractRaw(raw []byte, trace *big.Int) (*types.Transaction, error) {
+	return _Quorum.Contract.CreateContractRaw(&_Quorum.TransactOpts, raw, trace)
+}
+
+// CreateContractRaw is a paid mutator transaction binding the contract method 0x990ac85d.
+//
+// Solidity: function createContractRaw(bytes raw, uint128 trace) returns()
+func (_Quorum *QuorumTransactorSession) CreateContractRaw(raw []byte, trace *big.Int) (*types.Transaction, error) {
+	return _Quorum.Contract.CreateContractRaw(&_Quorum.TransactOpts, raw, trace)
+}
+
+// SetReceiverAddress is a paid mutator transaction binding the contract method 0x8279c7db.
+//
+// Solidity: function setReceiverAddress(address _receiver) returns()
+func (_Quorum *QuorumTransactor) SetReceiverAddress(opts *bind.TransactOpts, _receiver common.Address) (*types.Transaction, error) {
+	return _Quorum.contract.Transact(opts, "setReceiverAddress", _receiver)
+}
+
+// SetReceiverAddress is a paid mutator transaction binding the contract method 0x8279c7db.
+//
+// Solidity: function setReceiverAddress(address _receiver) returns()
+func (_Quorum *QuorumSession) SetReceiverAddress(_receiver common.Address) (*types.Transaction, error) {
+	return _Quorum.Contract.SetReceiverAddress(&_Quorum.TransactOpts, _receiver)
+}
+
+// SetReceiverAddress is a paid mutator transaction binding the contract method 0x8279c7db.
+//
+// Solidity: function setReceiverAddress(address _receiver) returns()
+func (_Quorum *QuorumTransactorSession) SetReceiverAddress(_receiver common.Address) (*types.Transaction, error) {
+	return _Quorum.Contract.SetReceiverAddress(&_Quorum.TransactOpts, _receiver)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address _owner) returns()
+func (_Quorum *QuorumTransactor) TransferOwnership(opts *bind.TransactOpts, _owner common.Address) (*types.Transaction, error) {
+	return _Quorum.contract.Transact(opts, "transferOwnership", _owner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address _owner) returns()
+func (_Quorum *QuorumSession) TransferOwnership(_owner common.Address) (*types.Transaction, error) {
+	return _Quorum.Contract.TransferOwnership(&_Quorum.TransactOpts, _owner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address _owner) returns()
+func (_Quorum *QuorumTransactorSession) TransferOwnership(_owner common.Address) (*types.Transaction, error) {
+	return _Quorum.Contract.TransferOwnership(&_Quorum.TransactOpts, _owner)
 }
