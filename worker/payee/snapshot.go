@@ -2,10 +2,8 @@ package payee
 
 import (
 	"context"
-	"encoding/base64"
 
 	"github.com/fox-one/ftoken/core"
-	"github.com/fox-one/ftoken/pkg/mtg"
 	"github.com/fox-one/pkg/logger"
 	"github.com/sirupsen/logrus"
 )
@@ -29,61 +27,20 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 	if err != nil {
 		log.WithError(err).Errorln("orders.Find")
 		return err
+	} else if order.ID == 0 {
+		log.WithField("order_id", order.ID).WithField("state", order.State).Infoln("skip: order not exist")
+		return nil
 	}
 
-	if order.ID == 0 {
-		order = &core.Order{
-			CreatedAt: snapshot.CreatedAt,
-			Version:   1,
-			TraceID:   snapshot.TraceID,
-			State:     core.OrderStateNew,
-			UserID:    snapshot.OpponentID,
-			FeeAsset:  snapshot.AssetID,
-			FeeAmount: snapshot.Amount,
-			Platform:  factory.Platform(),
-		}
-
-		data := []byte(snapshot.Memo)
-		if d, err := base64.StdEncoding.DecodeString(snapshot.Memo); err == nil {
-			data = d
-		}
-
-		if data, err := mtg.Scan(data, &order.Tokens); err != nil || len(order.Tokens) == 0 {
-			log.Infoln("refund: scan tokens failed")
-			return w.refundOrder(ctx, order)
-		} else {
-			var receiver core.Address
-			if _, err := mtg.Scan(data, &receiver); err == nil && receiver.Destination != "" {
-				order.Receiver = &receiver
-			}
-		}
-
-		if err := w.orders.Create(ctx, order); err != nil {
-			log.WithError(err).Errorln("orders.Create")
-			return err
-		}
-	} else {
-		if order.FeeAsset != snapshot.AssetID {
-			log.WithField("order_asset", order.FeeAsset).Infoln("skip: asset not matched")
-			return nil
-		}
-		if order.UserID == "" {
-			order.UserID = snapshot.OpponentID
-		}
-	}
-	if order.Receiver == nil && snapshot.OpponentID == "" {
-		log.Infoln("skip: empty reciever / address")
+	if order.FeeAsset != snapshot.AssetID {
+		log.WithField("order_asset", order.FeeAsset).Infoln("skip: asset not matched")
 		return nil
 	}
 
 	if order.State == core.OrderStateNew {
 		order.FeeAmount = snapshot.Amount
-		receiver := order.Receiver
-		if receiver == nil || receiver.Destination == "" {
-			receiver = w.system.Addresses[order.FeeAsset]
-		}
 
-		tx, err := factory.CreateTransaction(ctx, order.Tokens, receiver)
+		tx, err := factory.CreateTransaction(ctx, order.TokenRequests, order.TraceID)
 		if err != nil {
 			log.WithError(err).Errorln("factory.CreateTransaction")
 			return err

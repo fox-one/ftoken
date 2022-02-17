@@ -18,6 +18,5 @@ type (
 		ClientID     string
 		ClientSecret string
 		Gas          Gas
-		Addresses    map[string]*Address
 	}
 )

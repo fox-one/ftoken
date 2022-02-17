@@ -48,6 +48,7 @@ var workerCmd = &cobra.Command{
 		defer database.Close()
 		client := provideMixinClient()
 
+		assets := provideAssetStore(database)
 		wallets := provideWalletStore(database)
 		walletz := provideWalletService(client)
 		orders := provideOrderStore(database)
@@ -66,6 +67,7 @@ var workerCmd = &cobra.Command{
 				payee.Config{ClientID: cfg.Dapp.ClientID},
 				system,
 				properties,
+				assets,
 				orders,
 				transactions,
 				wallets,

@@ -74,7 +74,7 @@ func (*Factory) GasAsset() string {
 	return EthAsset
 }
 
-func (f *Factory) CreateTransaction(ctx context.Context, tokens []*core.Token, trace string) (*core.Transaction, error) {
+func (f *Factory) CreateTransaction(ctx context.Context, tokens core.TokenItems, trace string) (*core.Transaction, error) {
 	data, err := core.EncodeTokens(tokens)
 	if err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ func (f *Factory) ReadTransaction(ctx context.Context, hash string) (*core.Trans
 			if contract.Cap == nil || contract.Cap.Sign() <= 0 {
 				return nil, errors.New("invalid contract cap")
 			}
-			tx.Tokens = append(tx.Tokens, &core.Token{
+			tx.Tokens = append(tx.Tokens, &core.TokenItem{
 				Name:        contract.Name,
 				Symbol:      contract.Symbol,
 				TotalSupply: contract.Cap.Uint64(),
