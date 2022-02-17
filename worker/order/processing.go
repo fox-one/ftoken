@@ -118,7 +118,7 @@ func (w *Worker) handleProcessingOrder(ctx context.Context, order *core.Order) e
 			return err
 		}
 	case core.OrderStateDone:
-		order.Result = tx.Tokens
+		order.Tokens = tx.Tokens
 	}
 
 	if err := w.orders.Update(ctx, order); err != nil {

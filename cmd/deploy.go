@@ -14,17 +14,16 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		exec, _ := cmd.Flags().GetBool("e")
-		receiver, _ := cmd.Flags().GetString("receiver")
 		tokenStr, _ := cmd.Flags().GetString("tokens")
 
-		var tokens core.Tokens
+		var tokens core.TokenItems
 		if err := json.Unmarshal([]byte(tokenStr), &tokens); err != nil {
 			cmd.PrintErr("unmarshal tokens failed: ", tokens)
 			return
 		}
 
 		factory := provideQuorumFactory()
-		tx, err := factory.CreateTransaction(ctx, tokens, &core.Address{Destination: receiver})
+		tx, err := factory.CreateTransaction(ctx, tokens, "")
 		if err != nil {
 			cmd.PrintErr("CreateTransaction failed:", err)
 			return

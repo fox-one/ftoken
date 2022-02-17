@@ -5,7 +5,9 @@ import (
 
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/ftoken/quorum"
+	assetz "github.com/fox-one/ftoken/service/asset"
 	walletz "github.com/fox-one/ftoken/service/wallet"
+	"github.com/fox-one/ftoken/store/asset"
 	"github.com/fox-one/ftoken/store/order"
 	"github.com/fox-one/ftoken/store/transaction"
 	"github.com/fox-one/ftoken/store/wallet"
@@ -21,7 +23,6 @@ func provideSystem(ctx context.Context, client *mixin.Client, factories []core.F
 		ClientID:     cfg.Dapp.ClientID,
 		ClientSecret: cfg.Dapp.ClientSecret,
 		Version:      rootCmd.Version,
-		Addresses:    make(map[string]*core.Address, len(factories)),
 		Gas: core.Gas{
 			Mins:             make(number.Values, len(cfg.Gas.Mins)),
 			Multiplier:       cfg.Gas.Multiplier,
@@ -31,17 +32,6 @@ func provideSystem(ctx context.Context, client *mixin.Client, factories []core.F
 
 	for _, val := range cfg.Gas.Mins {
 		system.Gas.Mins.Set(val.Platform, val.Min)
-	}
-
-	for _, factory := range factories {
-		asset, err := client.ReadAsset(ctx, factory.GasAsset())
-		if err != nil {
-			return system, err
-		}
-		system.Addresses[factory.GasAsset()] = &core.Address{
-			Destination: asset.Destination,
-			Tag:         asset.Tag,
-		}
 	}
 
 	return system, nil
@@ -54,10 +44,6 @@ func provideMixinClient() *mixin.Client {
 	}
 
 	return c
-}
-
-func provideWalletService(c *mixin.Client) core.WalletService {
-	return walletz.New(walletz.Config{Pin: cfg.Dapp.Pin}, c)
 }
 
 func provideDatabase() (*db.DB, error) {
@@ -87,6 +73,18 @@ func provideOrderStore(db *db.DB) core.OrderStore {
 
 func provideTransactionStore(db *db.DB) core.TransactionStore {
 	return transaction.New(db)
+}
+
+func provideAssetStore(db *db.DB) core.AssetStore {
+	return asset.New(db)
+}
+
+func provideWalletService(c *mixin.Client) core.WalletService {
+	return walletz.New(walletz.Config{Pin: cfg.Dapp.Pin}, c)
+}
+
+func provideAssetService(c *mixin.Client) core.AssetService {
+	return assetz.New(c)
 }
 
 func provideAllFactories() []core.Factory {

@@ -27,6 +27,7 @@ type (
 
 		system       core.System
 		properties   property.Store
+		assets       core.AssetStore
 		wallets      core.WalletStore
 		walletz      core.WalletService
 		orders       core.OrderStore
@@ -40,6 +41,7 @@ func New(
 	cfg Config,
 	system core.System,
 	properties property.Store,
+	assets core.AssetStore,
 	orders core.OrderStore,
 	transactions core.TransactionStore,
 	wallets core.WalletStore,
@@ -59,6 +61,7 @@ func New(
 		clientID:     cfg.ClientID,
 		system:       system,
 		properties:   properties,
+		assets:       assets,
 		wallets:      wallets,
 		walletz:      walletz,
 		cache:        cache.New(time.Hour, time.Hour),
@@ -116,16 +119,8 @@ func (w *Worker) run(ctx context.Context) error {
 
 		snapshotKey := fmt.Sprintf("snapshot:%s", snapshot.SnapshotID)
 		if _, ok := w.cache.Get(snapshotKey); !ok {
-			switch snapshot.Source {
-			case "DEPOSIT_CONFIRMED":
-				if err := w.handleDepositSnapshot(ctx, snapshot); err != nil {
-					return err
-				}
-
-			default:
-				if err := w.handleSnapshot(ctx, snapshot); err != nil {
-					return err
-				}
+			if err := w.handleSnapshot(ctx, snapshot); err != nil {
+				return err
 			}
 			w.cache.SetDefault(snapshotKey, true)
 		}

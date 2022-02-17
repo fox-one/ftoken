@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/fox-one/ftoken/core"
-	"github.com/fox-one/ftoken/handler/action"
 	"github.com/fox-one/ftoken/handler/auth"
 	"github.com/fox-one/ftoken/handler/ip"
 	"github.com/fox-one/ftoken/handler/order"
@@ -17,6 +16,7 @@ import (
 type (
 	Server struct {
 		system    core.System
+		assets    core.AssetStore
 		orders    core.OrderStore
 		txStore   core.TransactionStore
 		walletz   core.WalletService
@@ -26,6 +26,7 @@ type (
 
 func New(
 	system core.System,
+	assets core.AssetStore,
 	orders core.OrderStore,
 	txStore core.TransactionStore,
 	walletz core.WalletService,
@@ -33,6 +34,7 @@ func New(
 ) Server {
 	return Server{
 		system:    system,
+		assets:    assets,
 		orders:    orders,
 		txStore:   txStore,
 		walletz:   walletz,
@@ -52,12 +54,10 @@ func (s Server) Handle() http.Handler {
 
 	r.Post("/oauth", auth.HandleOauth(s.system))
 
-	r.Post("/actions", action.HandleCreateAction(s.system, s.walletz, s.factories))
-
 	r.Post("/estimate-gas", order.HandleEstimateGas(s.system, s.factories))
 
 	r.Route("/orders", func(r chi.Router) {
-		r.Post("/", order.HandleCreateOrder(s.system, s.walletz, s.orders, s.factories))
+		r.Post("/", order.HandleCreateOrder(s.system, s.assets, s.walletz, s.orders, s.factories))
 		r.Get("/{trace_id}", order.HandleFetchOrder(s.orders))
 	})
 

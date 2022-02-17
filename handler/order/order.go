@@ -7,6 +7,7 @@ import (
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/ftoken/handler/render"
 	"github.com/fox-one/ftoken/handler/render/views"
+	"github.com/fox-one/ftoken/pkg/token"
 	"github.com/fox-one/pkg/httputil/param"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/go-chi/chi"
@@ -39,9 +40,9 @@ func HandleEstimateGas(system core.System, factories []core.Factory) http.Handle
 			factory = f
 		}
 
-		var tokens = make(core.Tokens, body.Count)
+		var tokens = make(core.TokenItems, body.Count)
 		for i := 0; i < body.Count; i++ {
-			tokens[i] = &core.Token{
+			tokens[i] = &core.TokenItem{
 				TotalSupply: 1000000,
 			}
 		}
@@ -51,7 +52,7 @@ func HandleEstimateGas(system core.System, factories []core.Factory) http.Handle
 			return
 		}
 
-		tx, err := factory.CreateTransaction(ctx, tokens, system.Addresses[factory.GasAsset()])
+		tx, err := factory.CreateTransaction(ctx, tokens, "")
 		if err != nil {
 			render.Error(w, twirp.InternalErrorWith(err))
 			return
@@ -68,15 +69,20 @@ func HandleEstimateGas(system core.System, factories []core.Factory) http.Handle
 	}
 }
 
-func HandleCreateOrder(system core.System, walletz core.WalletService, orders core.OrderStore, factories []core.Factory) http.HandlerFunc {
+func HandleCreateOrder(
+	system core.System,
+	assets core.AssetStore,
+	walletz core.WalletService,
+	orders core.OrderStore,
+	factories []core.Factory,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		var body struct {
-			TraceID         string        `json:"trace_id,omitempty"`
-			Platform        string        `json:"platform,omitempty"`
-			Tokens          core.Tokens   `json:"tokens,omitempty"`
-			ReceiverAddress *core.Address `json:"receiver_address,omitempty"`
+			TraceID  string             `json:"trace_id,omitempty"`
+			Platform string             `json:"platform,omitempty"`
+			Tokens   core.TokenRequests `json:"tokens,omitempty"`
 		}
 
 		if err := param.Binding(r, &body); err != nil {
@@ -88,13 +94,8 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 			body.TraceID = uuid.New()
 		}
 
-		var tokens core.Tokens
-		for _, token := range body.Tokens {
-			if token.Name != "" && token.Symbol != "" && token.TotalSupply > 0 {
-				tokens = append(tokens, token)
-			}
-		}
-		if len(tokens) == 0 {
+		tokens, err := token.ExportTokenItems(ctx, assets, body.Tokens)
+		if err != nil {
 			render.Error(w, twirp.RequiredArgumentError("tokens"))
 			return
 		}
@@ -127,9 +128,6 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 				Platform: body.Platform,
 				Tokens:   tokens,
 			}
-			if body.ReceiverAddress != nil && body.ReceiverAddress.Destination != "" {
-				order.Receiver = body.ReceiverAddress
-			}
 			if err := orders.Create(ctx, order); err != nil {
 				render.Error(w, twirp.InternalErrorWith(err))
 				return
@@ -137,13 +135,13 @@ func HandleCreateOrder(system core.System, walletz core.WalletService, orders co
 		} else {
 			t1, _ := core.EncodeTokens(order.Tokens)
 			t2, _ := core.EncodeTokens(tokens)
-			if order.UserID != "" && order.Receiver.Destination != body.ReceiverAddress.Destination || !bytes.Equal(t1, t2) {
+			if !bytes.Equal(t1, t2) {
 				render.Error(w, twirp.NewErrorf(twirp.AlreadyExists, "order with trace already exists"))
 				return
 			}
 		}
 
-		tx, err := factory.CreateTransaction(ctx, tokens, system.Addresses[factory.GasAsset()])
+		tx, err := factory.CreateTransaction(ctx, tokens, "")
 		if err != nil {
 			render.Error(w, twirp.InternalErrorWith(err))
 			return
@@ -171,6 +169,6 @@ func HandleFetchOrder(orders core.OrderStore) http.HandlerFunc {
 			return
 		}
 
-		render.JSON(w, views.OrderView(*order, false))
+		render.JSON(w, views.OrderView(*order))
 	}
 }

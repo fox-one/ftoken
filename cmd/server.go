@@ -66,6 +66,7 @@ var serverCmd = &cobra.Command{
 
 			svr := handler.New(
 				system,
+				provideAssetStore(database),
 				provideOrderStore(database),
 				provideTransactionStore(database),
 				provideWalletService(client),
