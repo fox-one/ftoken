@@ -121,19 +121,19 @@ func HandleCreateOrder(
 
 		if order.ID == 0 {
 			order = &core.Order{
-				Version:  1,
-				TraceID:  body.TraceID,
-				State:    core.OrderStateNew,
-				FeeAsset: factory.GasAsset(),
-				Platform: body.Platform,
-				Tokens:   tokens,
+				Version:       1,
+				TraceID:       body.TraceID,
+				State:         core.OrderStateNew,
+				FeeAsset:      factory.GasAsset(),
+				Platform:      body.Platform,
+				TokenRequests: tokens,
 			}
 			if err := orders.Create(ctx, order); err != nil {
 				render.Error(w, twirp.InternalErrorWith(err))
 				return
 			}
 		} else {
-			t1, _ := core.EncodeTokens(order.Tokens)
+			t1, _ := core.EncodeTokens(order.TokenRequests)
 			t2, _ := core.EncodeTokens(tokens)
 			if !bytes.Equal(t1, t2) {
 				render.Error(w, twirp.NewErrorf(twirp.AlreadyExists, "order with trace already exists"))

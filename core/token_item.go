@@ -11,10 +11,10 @@ import (
 type (
 	TokenItem struct {
 		AssetID     string `json:"asset_id,omitempty"`
-		AssetKey    string `json:"asset_key"`
-		Name        string `json:"name"`
-		Symbol      string `json:"symbol"`
-		TotalSupply uint64 `json:"total_supply"`
+		AssetKey    string `json:"asset_key,omitempty"`
+		Name        string `json:"name,omitempty"`
+		Symbol      string `json:"symbol,omitempty"`
+		TotalSupply uint64 `json:"total_supply,omitempty"`
 	}
 
 	TokenItems []*TokenItem
