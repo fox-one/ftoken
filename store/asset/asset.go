@@ -30,7 +30,9 @@ type assetStore struct {
 }
 
 func (s *assetStore) Save(ctx context.Context, asset *core.Asset) error {
-	return s.db.Update().Model(asset).Assign(toUpdateParams(asset)).FirstOrCreate(asset).Error
+	return s.db.Update().Model(asset).
+		Where("asset_id = ?", asset.AssetID).
+		Assign(toUpdateParams(asset)).FirstOrCreate(asset).Error
 }
 
 func (s *assetStore) Find(ctx context.Context, ids ...string) ([]*core.Asset, error) {
@@ -56,8 +58,10 @@ func (s *assetStore) ListAll(ctx context.Context) ([]*core.Asset, error) {
 
 func toUpdateParams(asset *core.Asset) map[string]interface{} {
 	params := map[string]interface{}{
-		"version":  asset.Version + 1,
-		"verified": asset.Verified,
+		"version": asset.Version + 1,
+	}
+	if asset.Verified {
+		params["verified"] = asset.Verified
 	}
 	if asset.DisplaySymbol != "" {
 		params["display_symbol"] = asset.DisplaySymbol
