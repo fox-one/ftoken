@@ -15,6 +15,10 @@ func init() {
 			return err
 		}
 
+		if err := tx.AddUniqueIndex("idx_assets_display_symbol", "display_symbol").Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
@@ -59,12 +63,19 @@ func (s *assetStore) ListAll(ctx context.Context) ([]*core.Asset, error) {
 func toUpdateParams(asset *core.Asset) map[string]interface{} {
 	params := map[string]interface{}{
 		"version": asset.Version + 1,
+		"logo":    asset.Logo,
 	}
 	if asset.Verified {
 		params["verified"] = asset.Verified
 	}
 	if asset.DisplaySymbol != "" {
 		params["display_symbol"] = asset.DisplaySymbol
+	}
+	if asset.Price.IsPositive() {
+		params["price"] = asset.Price.String()
+	}
+	if asset.PriceUpdatedAt != nil {
+		params["price_updated_at"] = *asset.PriceUpdatedAt
 	}
 	return params
 }
