@@ -34,5 +34,6 @@ func convertAsset(asset *mixin.Asset) *core.Asset {
 		Name:    asset.Name,
 		Symbol:  asset.Symbol,
 		ChainID: asset.ChainID,
+		Logo:    asset.IconURL,
 	}
 }
