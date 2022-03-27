@@ -11,13 +11,12 @@ import (
 	"github.com/fox-one/pkg/httputil/param"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/go-chi/chi"
+	"github.com/shopspring/decimal"
 	"github.com/twitchtv/twirp"
 )
 
 func HandleEstimateGas(system core.System, factories []core.Factory) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
 		var body struct {
 			Platform string `json:"platform,omitempty"`
 			Count    int    `json:"count"`
@@ -52,19 +51,10 @@ func HandleEstimateGas(system core.System, factories []core.Factory) http.Handle
 			return
 		}
 
-		tx, err := factory.CreateTransaction(ctx, tokens, "")
-		if err != nil {
-			render.Error(w, twirp.InternalErrorWith(err))
-			return
-		}
-
-		feeAmount := tx.Gas.Mul(system.Gas.Multiplier)
-		if min, ok := system.Gas.Mins[factory.Platform()]; ok && feeAmount.LessThan(min) {
-			feeAmount = min
-		}
+		fee := system.Fees[factory.Platform()]
 		render.JSON(w, render.H{
-			"fee_asset":  factory.GasAsset(),
-			"fee_amount": feeAmount,
+			"fee_asset":  fee.FeeAssetID,
+			"fee_amount": fee.FeeAmount.Mul(decimal.NewFromInt(int64(body.Count))),
 		})
 	}
 }
@@ -141,16 +131,9 @@ func HandleCreateOrder(
 			}
 		}
 
-		tx, err := factory.CreateTransaction(ctx, tokens, "")
-		if err != nil {
-			render.Error(w, twirp.InternalErrorWith(err))
-			return
-		}
-
-		order.FeeAmount = tx.Gas.Mul(system.Gas.Multiplier)
-		if min, ok := system.Gas.Mins[factory.Platform()]; ok && order.FeeAmount.LessThan(min) {
-			order.FeeAmount = min
-		}
+		fee := system.Fees[factory.Platform()]
+		order.FeeAsset = fee.FeeAssetID
+		order.FeeAmount = fee.FeeAmount.Mul(decimal.NewFromInt(int64(len(body.Tokens))))
 		render.JSON(w, order)
 	}
 }

@@ -26,10 +26,11 @@ type (
 		client         *ethclient.Client
 		quorum         *Quorum
 		transactor     *QuorumTransactor
+		maxGasPrice    *big.Int
 	}
 )
 
-func New(ethurl, priv, factoryContract string) *Factory {
+func New(ethurl, priv, factoryContract string, maxGasPrice big.Int) *Factory {
 	client, err := ethclient.Dial(ethurl)
 	if err != nil {
 		panic(err)
@@ -63,6 +64,7 @@ func New(ethurl, priv, factoryContract string) *Factory {
 		client:         client,
 		quorum:         quorum,
 		transactor:     transactor,
+		maxGasPrice:    &maxGasPrice,
 	}
 }
 
@@ -93,6 +95,9 @@ func (f *Factory) CreateTransaction(ctx context.Context, tokens core.TokenItems,
 	gasPrice, err := f.client.SuggestGasPrice(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if gasPrice.Cmp(f.maxGasPrice) > 0 {
+		gasPrice = f.maxGasPrice
 	}
 
 	opts, err := bind.NewKeyedTransactorWithChainID(f.privkey, chainID)
