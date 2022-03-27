@@ -81,21 +81,17 @@ func (w *Worker) handlePaidOrder(ctx context.Context, order *core.Order) error {
 
 	switch tx.State {
 	case core.TransactionStateNew:
-		if order.FeeAmount.Sub(order.GasUsage).LessThan(tx.Gas.Mul(w.system.Gas.StrictMultiplier)) {
-			order.State = core.OrderStateFailed
-		} else {
-			if err := factory.SendTransaction(ctx, tx); err != nil {
-				log.WithError(err).Errorln("factory.SendTransaction failed")
-				return err
-			}
-			tx.State = core.TransactionStatePending
-			if err := w.transactions.Update(ctx, tx); err != nil {
-				log.WithError(err).Errorln("transactions.Update failed")
-				return err
-			}
-			order.State = core.OrderStateProcessing
-			order.Transaction = tx.Hash
+		if err := factory.SendTransaction(ctx, tx); err != nil {
+			log.WithError(err).Errorln("factory.SendTransaction failed")
+			return err
 		}
+		tx.State = core.TransactionStatePending
+		if err := w.transactions.Update(ctx, tx); err != nil {
+			log.WithError(err).Errorln("transactions.Update failed")
+			return err
+		}
+		order.State = core.OrderStateProcessing
+		order.Transaction = tx.Hash
 
 	case core.TransactionStatePending:
 		order.State = core.OrderStateProcessing
@@ -103,18 +99,6 @@ func (w *Worker) handlePaidOrder(ctx context.Context, order *core.Order) error {
 
 	case core.TransactionStateFailed, core.TransactionStateSuccess:
 		panic("should never happen")
-	}
-
-	switch order.State {
-	case core.OrderStateNew, core.OrderStatePaid, core.OrderStateDone:
-		panic("should never happen")
-
-	case core.OrderStateFailed:
-		if err := w.refundOrder(ctx, order); err != nil {
-			return err
-		}
-
-	case core.OrderStateProcessing:
 	}
 
 	if err := w.orders.Update(ctx, order); err != nil {

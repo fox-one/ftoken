@@ -12,7 +12,6 @@ import (
 	"github.com/fox-one/ftoken/store/transaction"
 	"github.com/fox-one/ftoken/store/wallet"
 	"github.com/fox-one/mixin-sdk-go"
-	"github.com/fox-one/pkg/number"
 	"github.com/fox-one/pkg/property"
 	"github.com/fox-one/pkg/store/db"
 	propertystore "github.com/fox-one/pkg/store/property"
@@ -23,17 +22,12 @@ func provideSystem(ctx context.Context, client *mixin.Client, factories []core.F
 		ClientID:     cfg.Dapp.ClientID,
 		ClientSecret: cfg.Dapp.ClientSecret,
 		Version:      rootCmd.Version,
-		Gas: core.Gas{
-			Mins:             make(number.Values, len(cfg.Gas.Mins)),
-			Multiplier:       cfg.Gas.Multiplier,
-			StrictMultiplier: cfg.Gas.StrictMultiplier,
-		},
+		WhiteList:    map[string]bool{},
 	}
 
-	for _, val := range cfg.Gas.Mins {
-		system.Gas.Mins.Set(val.Platform, val.Min)
+	for _, id := range cfg.WhiteList {
+		system.WhiteList[id] = true
 	}
-
 	return system, nil
 }
 
@@ -94,5 +88,5 @@ func provideAllFactories() []core.Factory {
 }
 
 func provideQuorumFactory() core.Factory {
-	return quorum.New(cfg.Eth.Endpoint, cfg.Eth.PrivateKey, cfg.Eth.FactoryContract)
+	return quorum.New(cfg.Eth.Endpoint, cfg.Eth.PrivateKey, cfg.Eth.FactoryContract, *cfg.Eth.MaxGasPrice)
 }

@@ -2,9 +2,12 @@ package payee
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/pkg/logger"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,32 +30,46 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 	if err != nil {
 		log.WithError(err).Errorln("orders.Find")
 		return err
-	} else if order.ID == 0 {
-		log.WithField("order_id", order.ID).WithField("state", order.State).Infoln("skip: order not exist")
-		return nil
 	}
 
-	if order.FeeAsset != snapshot.AssetID {
-		log.WithField("order_asset", order.FeeAsset).Infoln("skip: asset not matched")
+	if order.ID == 0 {
+		order = &core.Order{
+			CreatedAt: snapshot.CreatedAt,
+			Version:   1,
+			TraceID:   snapshot.TraceID,
+			State:     core.OrderStateNew,
+			UserID:    snapshot.OpponentID,
+			FeeAsset:  snapshot.AssetID,
+			FeeAmount: snapshot.Amount,
+			Platform:  factory.Platform(),
+		}
+
+		data := []byte(snapshot.Memo)
+		if d, err := base64.StdEncoding.DecodeString(snapshot.Memo); err == nil {
+			data = d
+		}
+
+		if err := json.Unmarshal(data, &order.Tokens); err != nil || len(order.Tokens) == 0 {
+			log.Infoln("skip: scan tokens failed")
+			return nil
+		}
+
+		if err := w.orders.Create(ctx, order); err != nil {
+			log.WithError(err).Errorln("orders.Create")
+			return err
+		}
+	}
+
+	fee := w.system.Fees[factory.Platform()]
+	if snapshot.Amount.LessThan(fee.FeeAmount.Mul(decimal.NewFromInt(int64(len(order.Tokens))))) {
+		log.WithField("tokens:count", len(order.Tokens)).Infoln("skip: not enough fee")
 		return nil
 	}
 
 	if order.State == core.OrderStateNew {
+		order.UserID = snapshot.OpponentID
 		order.FeeAmount = snapshot.Amount
-
-		tx, err := factory.CreateTransaction(ctx, order.TokenRequests, order.TraceID)
-		if err != nil {
-			log.WithError(err).Errorln("factory.CreateTransaction")
-			return err
-		}
-
-		if snapshot.Amount.LessThan(tx.Gas.Mul(w.system.Gas.StrictMultiplier)) {
-			order.State = core.OrderStateFailed
-		} else if min, ok := w.system.Gas.Mins[order.Platform]; ok && snapshot.Amount.LessThan(min) {
-			order.State = core.OrderStateFailed
-		} else {
-			order.State = core.OrderStatePaid
-		}
+		order.State = core.OrderStatePaid
 
 		if err := w.orders.Update(ctx, order); err != nil {
 			log.WithError(err).Errorln("orders.Update")

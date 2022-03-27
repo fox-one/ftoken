@@ -1,15 +1,13 @@
 package core
 
 import (
-	"github.com/fox-one/pkg/number"
 	"github.com/shopspring/decimal"
 )
 
 type (
-	Gas struct {
-		Mins             number.Values
-		Multiplier       decimal.Decimal
-		StrictMultiplier decimal.Decimal
+	Fee struct {
+		FeeAssetID string
+		FeeAmount  decimal.Decimal
 	}
 
 	// System stores system information.
@@ -17,6 +15,7 @@ type (
 		Version      string
 		ClientID     string
 		ClientSecret string
-		Gas          Gas
+		Fees         map[string]*Fee
+		WhiteList    map[string]bool
 	}
 )
