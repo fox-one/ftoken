@@ -23,8 +23,15 @@ func provideSystem(ctx context.Context, client *mixin.Client, factories []core.F
 		ClientSecret: cfg.Dapp.ClientSecret,
 		Version:      rootCmd.Version,
 		WhiteList:    map[string]bool{},
+		Fees:         map[string]*core.Fee{},
 	}
 
+	for _, fee := range cfg.Fees {
+		system.Fees[fee.Platform] = &core.Fee{
+			FeeAssetID: fee.FeeAssetID,
+			FeeAmount:  fee.FeeAmount,
+		}
+	}
 	for _, id := range cfg.WhiteList {
 		system.WhiteList[id] = true
 	}
