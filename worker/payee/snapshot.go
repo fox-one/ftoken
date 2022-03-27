@@ -49,7 +49,7 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 			data = d
 		}
 
-		if err := json.Unmarshal(data, &order.Tokens); err != nil || len(order.Tokens) == 0 {
+		if err := json.Unmarshal(data, &order.TokenRequests); err != nil || len(order.TokenRequests) == 0 {
 			log.Infoln("skip: scan tokens failed")
 			return nil
 		}
@@ -61,8 +61,8 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 	}
 
 	fee := w.system.Fees[factory.Platform()]
-	if snapshot.Amount.LessThan(fee.FeeAmount.Mul(decimal.NewFromInt(int64(len(order.Tokens))))) {
-		log.WithField("tokens:count", len(order.Tokens)).Infoln("skip: not enough fee")
+	if snapshot.Amount.LessThan(fee.FeeAmount.Mul(decimal.NewFromInt(int64(len(order.TokenRequests))))) {
+		log.WithField("tokens:count", len(order.TokenRequests)).Infoln("skip: not enough fee")
 		return nil
 	}
 
