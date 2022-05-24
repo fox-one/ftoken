@@ -6,7 +6,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/bluele/gcache v0.0.2
 	github.com/drone/signal v1.0.0
-	github.com/ethereum/go-ethereum v1.10.15
+	github.com/ethereum/go-ethereum v1.10.17
 	github.com/fatih/structs v1.1.0
 	github.com/fox-one/mixin-sdk-go v1.5.7
 	github.com/fox-one/pkg v1.5.5
@@ -27,8 +27,10 @@ require (
 
 require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.1.2 // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/fox-one/msgpack v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
