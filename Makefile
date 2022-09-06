@@ -17,7 +17,7 @@ clean: ## remove files created during build pipeline
 .PHONY: install
 install: ## go install tools
 	$(call print-target)
-	go install $(shell go list -f '{{ join .Imports " " }}')
+	cd tools && go install $(shell cd tools && go list -f '{{ join .Imports " " }}' -tags=tools)
 
 .PHONY: generate
 generate: ## go generate
@@ -34,11 +34,28 @@ fmt: ## go fmt
 	$(call print-target)
 	go fmt ./...
 
+.PHONY: lint
+lint: ## golangci-lint
+	$(call print-target)
+	golangci-lint run
+
 .PHONY: test
 test: ## go test with race detector and code covarage
 	$(call print-target)
 	go test -race -covermode=atomic -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
+
+.PHONY: mod-tidy
+mod-tidy: ## go mod tidy
+	$(call print-target)
+	go mod tidy
+	cd tools && go mod tidy
+
+.PHONY: diff
+diff: ## git diff
+	$(call print-target)
+	git diff --exit-code
+	RES=$$(git status --porcelain) ; if [ -n "$$RES" ]; then echo $$RES && exit 1 ; fi
 
 .PHONY: build
 build: ## goreleaser build --snapshot --rm-dist
