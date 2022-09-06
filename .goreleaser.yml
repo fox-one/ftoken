@@ -1,0 +1,26 @@
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - main: .
+    id: ftoken
+    binary: ftoken
+    goos:
+      - linux
+      - darwin
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}}
+
+dockers:
+  - id: ftoken
+    goos: linux
+    goarch: amd64
+    dockerfile: docker/Dockerfile
+    image_templates:
+    - "ghcr.io/fox-one/{{ .ProjectName }}/ftoken:latest"
+    - "ghcr.io/fox-one/{{ .ProjectName }}/ftoken:{{ .Major }}"
+    - "ghcr.io/fox-one/{{ .ProjectName }}/ftoken:{{ .Major }}.{{ .Minor }}"
+    - "ghcr.io/fox-one/{{ .ProjectName }}/ftoken:{{ .Major }}.{{ .Minor }}.{{ .Patch }}"
