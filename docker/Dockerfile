@@ -1,18 +1,7 @@
-FROM golang:1.16 AS builder
+FROM alpine as build
+RUN apk --no-cache add ca-certificates
 
-WORKDIR /app
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . ./
-
-RUN make build-prod
-
-FROM frolvlad/alpine-glibc:latest
-
-WORKDIR /app
-
-COPY --from=builder /app/builds/ftoken .
-
-ENTRYPOINT ["/app/ftoken"]
+FROM scratch
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY ftoken /usr/bin/
+ENTRYPOINT ["/usr/bin/ftoken"]
