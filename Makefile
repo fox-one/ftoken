@@ -6,13 +6,13 @@ dev: clean install generate vet fmt test mod-tidy
 
 .PHONY: ci
 ci: ## CI build
-ci: dev diff
+ci: dev clean diff
 
 .PHONY: clean
 clean: ## remove files created during build pipeline
 	$(call print-target)
 	rm -rf dist
-	rm -f coverage.*
+	rm -f coverage.out coverage.html
 
 .PHONY: install
 install: ## go install tools
