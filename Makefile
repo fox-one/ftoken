@@ -55,6 +55,7 @@ mod-tidy: ## go mod tidy
 diff: ## git diff
 	$(call print-target)
 	git diff --exit-code
+	rm -f coverage.out coverage.html
 	RES=$$(git status --porcelain) ; if [ -n "$$RES" ]; then echo $$RES && exit 1 ; fi
 
 .PHONY: build
