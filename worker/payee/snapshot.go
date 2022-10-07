@@ -77,5 +77,10 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 		}
 	}
 
+	if order.State == core.OrderStateFailed {
+		log.Infoln("refund: order rejected")
+		return w.refundOrder(ctx, order)
+	}
+
 	return nil
 }
