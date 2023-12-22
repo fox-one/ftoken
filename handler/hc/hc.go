@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/fox-one/ftoken/handler/render"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func Handle(version string) http.Handler {

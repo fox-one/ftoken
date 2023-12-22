@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/fox-one/ftoken/core"
-	"github.com/fox-one/mixin-sdk-go"
+	"github.com/fox-one/mixin-sdk-go/v2"
 )
 
 func New(client *mixin.Client) core.UserService {
@@ -15,7 +15,6 @@ func New(client *mixin.Client) core.UserService {
 
 type userService struct {
 	client *mixin.Client
-	secret string
 }
 
 func (s *userService) Find(ctx context.Context, mixinID string) (*core.User, error) {

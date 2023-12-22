@@ -10,7 +10,7 @@ import (
 	"github.com/fox-one/ftoken/pkg/token"
 	"github.com/fox-one/pkg/httputil/param"
 	"github.com/fox-one/pkg/uuid"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 	"github.com/twitchtv/twirp"
 )

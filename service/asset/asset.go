@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/fox-one/ftoken/core"
-	"github.com/fox-one/mixin-sdk-go"
+	"github.com/fox-one/mixin-sdk-go/v2"
 )
 
 func New(c *mixin.Client) core.AssetService {
@@ -16,7 +16,7 @@ type assetService struct {
 }
 
 func (s *assetService) Find(ctx context.Context, assetID string) (*core.Asset, error) {
-	asset, err := s.c.ReadAsset(ctx, assetID)
+	asset, err := s.c.SafeReadAsset(ctx, assetID)
 	if err != nil {
 		if mixin.IsErrorCodes(err, 10002) {
 			err = core.ErrAssetNotExist
@@ -28,7 +28,7 @@ func (s *assetService) Find(ctx context.Context, assetID string) (*core.Asset, e
 	return convertAsset(asset), nil
 }
 
-func convertAsset(asset *mixin.Asset) *core.Asset {
+func convertAsset(asset *mixin.SafeAsset) *core.Asset {
 	return &core.Asset{
 		AssetID: asset.AssetID,
 		Name:    asset.Name,

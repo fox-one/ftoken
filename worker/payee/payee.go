@@ -119,17 +119,15 @@ func (w *Worker) run(ctx context.Context) error {
 
 		snapshotKey := fmt.Sprintf("snapshot:%s", snapshot.SnapshotID)
 		if _, ok := w.cache.Get(snapshotKey); !ok {
-			switch snapshot.Source {
-			case "DEPOSIT_CONFIRMED":
-				if err := w.handleDepositSnapshot(ctx, snapshot); err != nil {
-					return err
-				}
-
-			default:
+			if snapshot.TransactionHash == "" {
 				if _, ok := w.system.WhiteList[snapshot.OpponentID]; ok {
 					if err := w.handleSnapshot(ctx, snapshot); err != nil {
 						return err
 					}
+				}
+			} else {
+				if err := w.handleDepositSnapshot(ctx, snapshot); err != nil {
+					return err
 				}
 			}
 			w.cache.SetDefault(snapshotKey, true)

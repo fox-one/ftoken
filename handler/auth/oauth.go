@@ -5,7 +5,7 @@ import (
 
 	"github.com/fox-one/ftoken/core"
 	"github.com/fox-one/ftoken/handler/render"
-	"github.com/fox-one/mixin-sdk-go"
+	"github.com/fox-one/mixin-sdk-go/v2"
 	"github.com/fox-one/pkg/httputil/param"
 	"github.com/twitchtv/twirp"
 )

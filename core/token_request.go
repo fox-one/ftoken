@@ -7,7 +7,6 @@ import (
 
 const (
 	TokenTypeFswapLP TokenType = iota
-	TokenTypeRings
 )
 
 type (

@@ -9,7 +9,7 @@ import (
 	"github.com/fox-one/ftoken/handler/order"
 	"github.com/fox-one/ftoken/handler/render"
 	"github.com/fox-one/ftoken/handler/system"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/twitchtv/twirp"
 )
 

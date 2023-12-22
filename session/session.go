@@ -5,7 +5,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/fox-one/ftoken/core"
-	"github.com/fox-one/mixin-sdk-go"
+	"github.com/fox-one/mixin-sdk-go/v2"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/sync/singleflight"
 )

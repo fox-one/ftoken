@@ -35,15 +35,6 @@ func ExportTokenItem(ctx context.Context, assets core.AssetStore, req *core.Toke
 		}
 		return nil, ErrAssetUnverified
 
-	case core.TokenTypeRings:
-		assets, err := assets.Find(ctx, req.Asset1)
-		if err != nil {
-			return nil, err
-		} else if len(assets) == 1 && assetsVerified(ctx, assets) {
-			return exportRings(assets[0]), nil
-		}
-		return nil, ErrAssetUnverified
-
 	default:
 		return nil, ErrInvalidType
 	}

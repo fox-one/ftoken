@@ -3,6 +3,7 @@ package payee
 import (
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 
 	"github.com/fox-one/ftoken/core"
@@ -17,11 +18,16 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 		return nil
 	}
 
+	memo := snapshot.Memo
+	if m, err := hex.DecodeString(snapshot.Memo); err == nil {
+		memo = string(m)
+	}
+
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"trace":     snapshot.TraceID,
 		"pay_asset": snapshot.AssetID,
 		"amount":    snapshot.Amount,
-		"memo":      snapshot.Memo,
+		"memo":      memo,
 		"platform":  factory.Platform(),
 	})
 	ctx = logger.WithContext(ctx, log)
@@ -44,8 +50,8 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 			Platform:  factory.Platform(),
 		}
 
-		data := []byte(snapshot.Memo)
-		if d, err := base64.StdEncoding.DecodeString(snapshot.Memo); err == nil {
+		data := []byte(memo)
+		if d, err := base64.StdEncoding.DecodeString(memo); err == nil {
 			data = d
 		}
 

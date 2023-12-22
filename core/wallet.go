@@ -58,6 +58,5 @@ type (
 	WalletService interface {
 		ListSnapshots(ctx context.Context, offset time.Time, limit int) ([]*Snapshot, error)
 		Transfer(ctx context.Context, transfer *Transfer) error
-		ReqTransfer(ctx context.Context, transfer *Transfer) (string, error)
 	}
 )

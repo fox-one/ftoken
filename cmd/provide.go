@@ -11,7 +11,7 @@ import (
 	"github.com/fox-one/ftoken/store/order"
 	"github.com/fox-one/ftoken/store/transaction"
 	"github.com/fox-one/ftoken/store/wallet"
-	"github.com/fox-one/mixin-sdk-go"
+	"github.com/fox-one/mixin-sdk-go/v2"
 	"github.com/fox-one/pkg/property"
 	"github.com/fox-one/pkg/store/db"
 	propertystore "github.com/fox-one/pkg/store/property"
@@ -81,7 +81,7 @@ func provideAssetStore(db *db.DB) core.AssetStore {
 }
 
 func provideWalletService(c *mixin.Client) core.WalletService {
-	return walletz.New(walletz.Config{Pin: cfg.Dapp.Pin}, c)
+	return walletz.New(walletz.Config{SafeWalletHost: cfg.SafeWalletHost}, c)
 }
 
 func provideAssetService(c *mixin.Client) core.AssetService {
