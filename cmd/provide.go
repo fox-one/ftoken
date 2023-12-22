@@ -81,7 +81,7 @@ func provideAssetStore(db *db.DB) core.AssetStore {
 }
 
 func provideWalletService(c *mixin.Client) core.WalletService {
-	return walletz.New(walletz.Config{SafeWalletHost: cfg.SafeWalletHost}, c)
+	return walletz.New(walletz.Config{Spend: cfg.Dapp.SpendKey}, c)
 }
 
 func provideAssetService(c *mixin.Client) core.AssetService {
