@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/fox-one/ftoken/core"
@@ -84,6 +85,8 @@ func (m *mixinBot) Transfer(ctx context.Context, req *core.Transfer) error {
 	}
 
 	builder := mixin.NewSafeTransactionBuilder(utxos)
+	builder.Hint = fmt.Sprintf(req.TraceID, "ftoken:transfer:hint")
+	builder.Memo = req.Memo
 	tx, err := m.client.MakeTransaction(ctx, builder, []*mixin.TransactionOutput{
 		{
 			Amount:  req.Amount,
