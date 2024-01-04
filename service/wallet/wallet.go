@@ -150,7 +150,7 @@ func (m *mixinBot) toSnapshots(ctx context.Context, items []*mixin.SafeSnapshot)
 			Memo:       s.Memo,
 		}
 
-		if s.Deposit == nil && s.Deposit.DepositHash != "" {
+		if s.Deposit != nil && s.Deposit.DepositHash != "" {
 			snapshot.TransactionHash = s.Deposit.DepositHash
 		}
 
